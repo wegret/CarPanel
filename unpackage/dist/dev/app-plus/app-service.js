@@ -39,20 +39,40 @@ if (uni.restoreGlobal) {
     }
   }
   function sendByte(deviceId, serviceId, characteristicId, byteValue) {
-    let buffer = new Uint8Array([byteValue]).buffer;
-    uni.writeBLECharacteristicValue({
-      deviceId,
-      serviceId,
-      characteristicId,
-      value: buffer,
-      success: function(res) {
-        formatAppLog("log", "at services/BLE.js:10", "Sent: ", res);
-      },
-      fail: function(err) {
-        formatAppLog("error", "at services/BLE.js:13", "Fail to send!", err);
+    return new Promise((resolve, reject) => {
+      let buffer = new Uint8Array([byteValue]).buffer;
+      const maxRetries = 3;
+      function attemptSend(retriesLeft) {
+        uni.writeBLECharacteristicValue({
+          deviceId,
+          serviceId,
+          characteristicId,
+          value: buffer,
+          success: function(res) {
+            formatAppLog("log", "at services/BLE.js:13", "Sent: ", res);
+            resolve(res);
+          },
+          fail: function(err) {
+            if (retriesLeft > 0) {
+              formatAppLog("warn", "at services/BLE.js:18", "Send failed, retrying...", err);
+              attemptSend(retriesLeft - 1);
+            } else {
+              formatAppLog("error", "at services/BLE.js:21", "Fail to send after retries!", err);
+              reject(err);
+            }
+          }
+        });
       }
+      attemptSend(maxRetries);
     });
   }
+  sendByte(globalThis.deviceId, globalThis.serviceId, globalThis.characteristicId, 1).then(() => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 100);
+    });
+  }).then(() => sendByte(globalThis.deviceId, globalThis.serviceId, globalThis.characteristicId, 0)).catch((err) => formatAppLog("error", "at services/BLE.js:42", "Error sending bytes:", err));
   const _export_sfc = (sfc, props) => {
     const target = sfc.__vccOpts || sfc;
     for (const [key, val] of props) {
@@ -134,10 +154,12 @@ if (uni.restoreGlobal) {
       /* 启动：发送01 */
       CarStart() {
         sendByte(this.deviceId, this.serviceId, this.characteristicId, 1);
+        sendByte(this.deviceId, this.serviceId, this.characteristicId, 0);
       },
       /* 停止：发送02 */
       CarStop() {
         sendByte(this.deviceId, this.serviceId, this.characteristicId, 2);
+        sendByte(this.deviceId, this.serviceId, this.characteristicId, 0);
       }
     }
   };

@@ -147,10 +147,12 @@
 			/* 启动：发送01 */
 			CarStart() {
 				sendByte(this.deviceId, this.serviceId, this.characteristicId, 0x01);
+				sendByte(this.deviceId, this.serviceId, this.characteristicId, 0x00);
 			},
 			/* 停止：发送02 */
 			CarStop() {
 				sendByte(this.deviceId, this.serviceId, this.characteristicId, 0x02);
+				sendByte(this.deviceId, this.serviceId, this.characteristicId, 0x00);
 			}
 
 		}
