@@ -5,17 +5,23 @@
 			<button @click="gotoBluetooth">{{ isConnected ? '蓝牙已链接' : '蓝牙未链接' }}</button>
 		</view>
 
+
 		<view v-if="isConnected">
 			<button @click="test">测试通信</button>
 
 			<button @click="CarStart" class="button-important">启动</button>
 			<button @click="CarStop">停止</button>
 		</view>
+		<view v-if="isConnected">
+			<button @click="gotoSetting">设置参数</button>
+		</view>
 
 	</view>
 </template>
 
 <script>
+	import { sendByte } from '../../services/BLE.js';
+	
 	export default {
 		data() {
 			return {
@@ -40,11 +46,14 @@
 			});
 		},
 		methods: {
-			/* 发送启动命令 */
-
 			gotoBluetooth() {
 				uni.navigateTo({
 					url: "/pages/bluetooth/bluetooth"
+				});
+			},
+			gotoSetting() {
+				uni.navigateTo({
+					url: "/pages/setting/setting"
 				});
 			},
 			enableBluetoothListener(serviceId, characteristicId) {
@@ -135,92 +144,19 @@
 
 			},
 
-			/* 字符串转十六进制 */
-			hexStringToArrayBuffer(hexString) {
-				if (hexString.length % 2 !== 0) {
-					console.error("Invalid hex string");
-					return null;
-				}
-
-				let buffer = new ArrayBuffer(hexString.length / 2);
-				let dataView = new DataView(buffer);
-
-				for (let i = 0; i < hexString.length; i += 2) {
-					let byteValue = parseInt(hexString.substr(i, 2), 16);
-					dataView.setUint8(i / 2, byteValue);
-				}
-
-				return buffer;
-			},
-
-			sendHex(hexString) {
-				let buffer = this.hexStringToArrayBuffer(hexString);
-				if (buffer) {
-					uni.writeBLECharacteristicValue({
-						deviceId: this.deviceId,
-						serviceId: this.serviceId,
-						characteristicId: this.characteristicId,
-						value: buffer,
-						success: function(res) {
-							console.log('Hex data sent successfully:', res);
-						},
-						fail: function(err) {
-							console.error('Failed to send hex data:', err);
-						}
-					});
-				}
-			},
-
 			/* 启动：发送01 */
 			CarStart() {
-				this.sendHex("01");
+				sendByte(this.deviceId, this.serviceId, this.characteristicId, 0x01);
 			},
 			/* 停止：发送02 */
 			CarStop() {
-				this.sendHex("00");
+				sendByte(this.deviceId, this.serviceId, this.characteristicId, 0x02);
 			}
-			
+
 		}
 	}
 </script>
 
 <style>
-	.content {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 20px;
-	}
 
-	.logo {
-		height: 200rpx;
-		width: 200rpx;
-		margin-top: 200rpx;
-		margin-left: auto;
-		margin-right: auto;
-		margin-bottom: 50rpx;
-	}
-
-	.text-area {
-		display: flex;
-		justify-content: center;
-	}
-
-	.title {
-		font-size: 36rpx;
-		color: #8f8f94;
-	}
-
-	/* 按钮样式 */
-	button {
-		margin-top: 20rpx;
-		padding: 10rpx 20rpx;
-	}
-
-	.button-important {
-		border-radius: 10rpx;
-		background-color: #007AFF;
-		color: #fff;
-	}
 </style>

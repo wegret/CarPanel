@@ -38,6 +38,21 @@ if (uni.restoreGlobal) {
       console[type].apply(console, [...args, filename]);
     }
   }
+  function sendByte(deviceId, serviceId, characteristicId, byteValue) {
+    let buffer = new Uint8Array([byteValue]).buffer;
+    uni.writeBLECharacteristicValue({
+      deviceId,
+      serviceId,
+      characteristicId,
+      value: buffer,
+      success: function(res) {
+        formatAppLog("log", "at services/BLE.js:10", "Sent: ", res);
+      },
+      fail: function(err) {
+        formatAppLog("error", "at services/BLE.js:13", "Fail to send!", err);
+      }
+    });
+  }
   const _export_sfc = (sfc, props) => {
     const target = sfc.__vccOpts || sfc;
     for (const [key, val] of props) {
@@ -45,7 +60,7 @@ if (uni.restoreGlobal) {
     }
     return target;
   };
-  const _sfc_main$2 = {
+  const _sfc_main$3 = {
     data() {
       return {
         title: "Panel",
@@ -60,20 +75,24 @@ if (uni.restoreGlobal) {
       };
     },
     onShow() {
-      formatAppLog("log", "at pages/index/index.vue:33", "State:", this.isConnected);
-      formatAppLog("log", "at pages/index/index.vue:34", "DeviceId:", this.deviceId);
+      formatAppLog("log", "at pages/index/index.vue:39", "State:", this.isConnected);
+      formatAppLog("log", "at pages/index/index.vue:40", "DeviceId:", this.deviceId);
     },
     onLoad() {
       uni.onBLECharacteristicValueChange((res) => {
         let uint8Array = new Uint8Array(res.value);
-        formatAppLog("log", "at pages/index/index.vue:39", "Received data:", uint8Array);
+        formatAppLog("log", "at pages/index/index.vue:45", "Received data:", uint8Array);
       });
     },
     methods: {
-      /* 发送启动命令 */
       gotoBluetooth() {
         uni.navigateTo({
           url: "/pages/bluetooth/bluetooth"
+        });
+      },
+      gotoSetting() {
+        uni.navigateTo({
+          url: "/pages/setting/setting"
         });
       },
       enableBluetoothListener(serviceId, characteristicId) {
@@ -83,7 +102,7 @@ if (uni.restoreGlobal) {
           characteristicId,
           state: true,
           success: (res) => {
-            formatAppLog("log", "at pages/index/index.vue:57", "Notification enabled for", characteristicId, ":", res);
+            formatAppLog("log", "at pages/index/index.vue:66", "Notification enabled for", characteristicId, ":", res);
           }
         });
       },
@@ -101,10 +120,10 @@ if (uni.restoreGlobal) {
           //characteristicId: '0000FFF5-0000-1000-8000-00805F9B34FB',
           value: buffer,
           success: function(res) {
-            formatAppLog("log", "at pages/index/index.vue:126", "Data sent successfully:", res);
+            formatAppLog("log", "at pages/index/index.vue:135", "Data sent successfully:", res);
           },
           fail: function(err) {
-            formatAppLog("error", "at pages/index/index.vue:129", "Failed to send data:", err);
+            formatAppLog("error", "at pages/index/index.vue:138", "Failed to send data:", err);
           }
         });
         this.enableBluetoothListener(
@@ -112,48 +131,17 @@ if (uni.restoreGlobal) {
           "0000FFE1-0000-1000-8000-00805F9B34FB"
         );
       },
-      /* 字符串转十六进制 */
-      hexStringToArrayBuffer(hexString) {
-        if (hexString.length % 2 !== 0) {
-          formatAppLog("error", "at pages/index/index.vue:141", "Invalid hex string");
-          return null;
-        }
-        let buffer = new ArrayBuffer(hexString.length / 2);
-        let dataView = new DataView(buffer);
-        for (let i = 0; i < hexString.length; i += 2) {
-          let byteValue = parseInt(hexString.substr(i, 2), 16);
-          dataView.setUint8(i / 2, byteValue);
-        }
-        return buffer;
-      },
-      sendHex(hexString) {
-        let buffer = this.hexStringToArrayBuffer(hexString);
-        if (buffer) {
-          uni.writeBLECharacteristicValue({
-            deviceId: this.deviceId,
-            serviceId: this.serviceId,
-            characteristicId: this.characteristicId,
-            value: buffer,
-            success: function(res) {
-              formatAppLog("log", "at pages/index/index.vue:165", "Hex data sent successfully:", res);
-            },
-            fail: function(err) {
-              formatAppLog("error", "at pages/index/index.vue:168", "Failed to send hex data:", err);
-            }
-          });
-        }
-      },
       /* 启动：发送01 */
       CarStart() {
-        this.sendHex("01");
+        sendByte(this.deviceId, this.serviceId, this.characteristicId, 1);
       },
       /* 停止：发送02 */
       CarStop() {
-        this.sendHex("00");
+        sendByte(this.deviceId, this.serviceId, this.characteristicId, 2);
       }
     }
   };
-  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
       vue.createElementVNode("view", null, [
         vue.createElementVNode(
@@ -177,11 +165,16 @@ if (uni.restoreGlobal) {
         vue.createElementVNode("button", {
           onClick: _cache[3] || (_cache[3] = (...args) => $options.CarStop && $options.CarStop(...args))
         }, "停止")
+      ])) : vue.createCommentVNode("v-if", true),
+      $data.isConnected ? (vue.openBlock(), vue.createElementBlock("view", { key: 1 }, [
+        vue.createElementVNode("button", {
+          onClick: _cache[4] || (_cache[4] = (...args) => $options.gotoSetting && $options.gotoSetting(...args))
+        }, "设置参数")
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__file", "D:/CodeBase/Panel/pages/index/index.vue"]]);
-  const _sfc_main$1 = {
+  const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__file", "D:/CodeBase/Panel/pages/index/index.vue"]]);
+  const _sfc_main$2 = {
     data() {
       return {
         devices: []
@@ -196,11 +189,21 @@ if (uni.restoreGlobal) {
             },
             fail: (err) => {
               formatAppLog("error", "at pages/bluetooth/bluetooth.vue:44", "Failed to Find Bluetooth", err);
+              uni.showToast({
+                title: "蓝牙启动失败！",
+                icon: "fail",
+                duration: 2e3
+              });
             }
           });
         },
         fail: (err) => {
-          formatAppLog("error", "at pages/bluetooth/bluetooth.vue:49", "Failed to open Bluetooth", err);
+          formatAppLog("error", "at pages/bluetooth/bluetooth.vue:54", "Failed to open Bluetooth", err);
+          uni.showToast({
+            title: "蓝牙启动失败！",
+            icon: "fail",
+            duration: 2e3
+          });
         }
       });
     },
@@ -211,7 +214,7 @@ if (uni.restoreGlobal) {
           success: (res) => {
           },
           fail: (err) => {
-            formatAppLog("error", "at pages/bluetooth/bluetooth.vue:61", "Bluetooth Adapter FAILED", err);
+            formatAppLog("error", "at pages/bluetooth/bluetooth.vue:71", "Bluetooth Adapter FAILED", err);
           }
         });
         uni.onBluetoothDeviceFound((res) => {
@@ -226,12 +229,24 @@ if (uni.restoreGlobal) {
           deviceId: device.deviceId,
           success: (res) => {
             homePage.isConnected = true;
-            formatAppLog("log", "at pages/bluetooth/bluetooth.vue:82", "Connect OK!");
+            formatAppLog("log", "at pages/bluetooth/bluetooth.vue:92", "Connect OK!");
+            uni.showToast({
+              title: "蓝牙连接成功！",
+              icon: "success",
+              duration: 2e3
+            });
+            setTimeout(function() {
+              uni.navigateBack();
+            }, 500);
+          },
+          fail: (err) => {
+            uni.showToast({
+              title: "蓝牙连接失败！",
+              icon: "fail",
+              duration: 2e3
+            });
           }
         });
-        setTimeout(function() {
-          uni.navigateBack();
-        }, 500);
       },
       // 选择默认设备
       selectDevice_Default() {
@@ -241,21 +256,34 @@ if (uni.restoreGlobal) {
           deviceId: pages[0].deviceId,
           success: (res) => {
             homePage.isConnected = true;
-            formatAppLog("log", "at pages/bluetooth/bluetooth.vue:100", "Connect OK!");
+            formatAppLog("log", "at pages/bluetooth/bluetooth.vue:122", "Connect OK!");
+            uni.showToast({
+              title: "蓝牙连接成功！",
+              icon: "success",
+              duration: 2e3
+            });
+            setTimeout(function() {
+              uni.navigateBack();
+            }, 500);
+          },
+          fail: (err) => {
+            uni.showToast({
+              title: "蓝牙连接失败！",
+              icon: "fail",
+              duration: 2e3
+            });
           }
         });
-        setTimeout(function() {
-          uni.navigateBack();
-        }, 500);
       }
     }
   };
-  function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
       vue.createElementVNode("text", null, " 搜索设备中... "),
       vue.createElementVNode("view", null, [
         vue.createElementVNode("button", {
-          onClick: _cache[0] || (_cache[0] = ($event) => $options.selectDevice_Default())
+          onClick: _cache[0] || (_cache[0] = ($event) => $options.selectDevice_Default()),
+          class: "button-important"
         }, " 链接默认设备 ")
       ]),
       (vue.openBlock(true), vue.createElementBlock(
@@ -292,9 +320,106 @@ if (uni.restoreGlobal) {
       ))
     ]);
   }
-  const PagesBluetoothBluetooth = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__file", "D:/CodeBase/Panel/pages/bluetooth/bluetooth.vue"]]);
+  const PagesBluetoothBluetooth = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__file", "D:/CodeBase/Panel/pages/bluetooth/bluetooth.vue"]]);
+  const _sfc_main$1 = {
+    data() {
+      return {
+        groups: [
+          {
+            groupName: "左轮PID",
+            params: [
+              { id: "Kp", label: "Kp", type: "number", value: 0 },
+              { id: "Ki", label: "Ki", type: "number", value: 0 },
+              { id: "Kd", label: "Kd", type: "number", value: 0 }
+            ]
+          },
+          {
+            groupName: "右轮PID",
+            params: [
+              { id: "Kp", label: "Kp", type: "number", value: 0 },
+              { id: "Ki", label: "Ki", type: "number", value: 0 },
+              { id: "Kd", label: "Kd", type: "number", value: 0 }
+            ]
+          },
+          {
+            groupName: "速度参数",
+            params: [
+              { id: "v_straight", label: "直道速度", type: "number", value: 0 },
+              { id: "v_turning", label: "弯道速度", type: "number", value: 0 }
+            ]
+          }
+        ]
+      };
+    },
+    methods: {}
+  };
+  function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
+      vue.createElementVNode("view", { class: "title" }, "参数设置"),
+      (vue.openBlock(true), vue.createElementBlock(
+        vue.Fragment,
+        null,
+        vue.renderList($data.groups, (group) => {
+          return vue.openBlock(), vue.createElementBlock("view", {
+            key: group.groupName,
+            class: "group-container"
+          }, [
+            vue.createElementVNode(
+              "view",
+              { class: "group-title" },
+              vue.toDisplayString(group.groupName),
+              1
+              /* TEXT */
+            ),
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList(group.params, (param) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: param.id,
+                  class: "input-group"
+                }, [
+                  vue.createElementVNode(
+                    "text",
+                    { class: "label" },
+                    vue.toDisplayString(param.label),
+                    1
+                    /* TEXT */
+                  ),
+                  vue.withDirectives(vue.createElementVNode("input", {
+                    type: param.type,
+                    "onUpdate:modelValue": ($event) => param.value = $event,
+                    placeholder: "请输入" + param.label,
+                    class: "input",
+                    step: param.step || 0.01
+                  }, null, 8, ["type", "onUpdate:modelValue", "placeholder", "step"]), [
+                    [
+                      vue.vModelDynamic,
+                      param.value,
+                      void 0,
+                      { number: true }
+                    ]
+                  ])
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ]);
+        }),
+        128
+        /* KEYED_FRAGMENT */
+      )),
+      vue.createElementVNode("button", {
+        onClick: _cache[0] || (_cache[0] = (...args) => _ctx.submitParameters && _ctx.submitParameters(...args)),
+        class: "submit-btn"
+      }, "提交")
+    ]);
+  }
+  const PagesSettingSetting = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__file", "D:/CodeBase/Panel/pages/setting/setting.vue"]]);
   __definePage("pages/index/index", PagesIndexIndex);
   __definePage("pages/bluetooth/bluetooth", PagesBluetoothBluetooth);
+  __definePage("pages/setting/setting", PagesSettingSetting);
   const _sfc_main = {
     onLaunch: function() {
       formatAppLog("log", "at App.vue:4", "App Launch");

@@ -5,7 +5,7 @@
 		</text>
 		
 		<view>
-			<button @click="selectDevice_Default()">
+			<button @click="selectDevice_Default()" class="button-important">
 				链接默认设备
 			</button>
 		</view>
@@ -42,11 +42,21 @@
 						},
 						fail: (err) => {
 							console.error('Failed to Find Bluetooth', err);
+							uni.showToast({
+							    title: '蓝牙启动失败！',
+							    icon: 'fail',
+							    duration: 2000
+							});
 						}
 					});
 				},
 				fail: (err) => {
 					console.error('Failed to open Bluetooth', err);
+					uni.showToast({
+					    title: '蓝牙启动失败！',
+					    icon: 'fail',
+					    duration: 2000
+					});
 				}
 			});
 		},
@@ -80,11 +90,23 @@
 					success: (res) => {
 						homePage.isConnected = true;
 						console.log('Connect OK!');
+						uni.showToast({
+						    title: '蓝牙连接成功！',
+						    icon: 'success',
+						    duration: 2000
+						});
+						setTimeout(function() {
+							uni.navigateBack();
+						}, 500);
+					},
+					fail: (err) => {
+						uni.showToast({
+						    title: '蓝牙连接失败！',
+						    icon: 'fail',
+						    duration: 2000
+						});
 					}
 				});
-				setTimeout(function() {
-					uni.navigateBack();
-				}, 500);
 			},
 
 			// 选择默认设备
@@ -98,11 +120,23 @@
 					success: (res) => {
 						homePage.isConnected = true;
 						console.log('Connect OK!');
+						uni.showToast({
+						    title: '蓝牙连接成功！',
+						    icon: 'success',
+						    duration: 2000
+						});
+						setTimeout(function() {
+							uni.navigateBack();
+						}, 500);
+					},
+					fail: (err) => {
+						uni.showToast({
+						    title: '蓝牙连接失败！',
+						    icon: 'fail',
+						    duration: 2000
+						});
 					}
 				});
-				setTimeout(function() {
-					uni.navigateBack();
-				}, 500);
 			}
 		}
 	}
