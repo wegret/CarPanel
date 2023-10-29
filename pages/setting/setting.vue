@@ -14,46 +14,92 @@
 				  class="input"
 				  :step="param.step || 0.01"
 				/>
+				<button @click="submitSingleParameter(param.num, param.value, param.codetype)" class="single-submit-btn">提交</button>
 			</view> 
 		</view>
 		
-		<button @click="submitParameters" class="submit-btn">提交</button>
 	</view>
 </template>
 
 <script>
+	import { sendByte } from '../../services/BLE.js';
 	export default {
 		data() {
 			return {
+				// 默认的设备信息
+				deviceId: '60:E8:5B:6C:5C:8A',
+				serviceId: '0000FFE0-0000-1000-8000-00805F9B34FB',
+				characteristicId: '0000FFE1-0000-1000-8000-00805F9B34FB',
+				
 				groups: [
 					{
-						groupName: "左轮PID",
+						groupName: "电机PID",
 						params: [
-							{id: 'Kp',label: 'Kp',type: 'number',value: 0},
-							{id: 'Ki',label: 'Ki',type: 'number',value: 0},
-							{id: 'Kd',label: 'Kd',type: 'number',value: 0}
-						]
-					},
-					{
-						groupName: "右轮PID",
-						params: [
-							{id: 'Kp',label: 'Kp',type: 'number',value: 0},
-							{id: 'Ki',label: 'Ki',type: 'number',value: 0},
-							{id: 'Kd',label: 'Kd',type: 'number',value: 0}
+							{id: 'Kp',label: 'Kp',type: 'number',value: 0,num:1,codetype:1},
+							{id: 'Ki',label: 'Ki',type: 'number',value: 0,num:2,codetype:1},
+							{id: 'Kd',label: 'Kd',type: 'number',value: 0,num:3,codetype:1}
 						]
 					},
 					{
 						groupName: "速度参数",
 						params: [
-							{id: 'v_straight',label: '直道速度',type: 'number',value: 0},
-							{id: 'v_turning',label: '弯道速度',type: 'number',value: 0}
+							{id: 'v_straight',label: '目标速度',type: 'number',value: 0,num:4,codetype:0},
+							{id: 'v_turning',label: '弯道速度',type: 'number',value: 0,num:5,codetype:0}
 						]
 					}
 				]
 			}
 		},
+		onLoad() {
+			/*
+			const pages = getCurrentPages();
+			const homePage = pages[0]; // 获取首页
+			this.deviceId=pages[0].deviceId;
+			this.characteristicId=pages[0].characteristicId;*/
+		},
 		methods: {
-
+			checkNumberType(num) {
+			    if (Number.isInteger(num)) {
+			        return 1;
+			    } else {
+			        return 0;
+			    }
+			},
+			submitSingleParameter(paramNum, value, codetype) {
+				// 这里处理单个参数的提交逻辑
+				sendByte(this.deviceId, this.serviceId, this.characteristicId, 0x03);
+				if (codetype==0){
+					console.log("整数");
+					setTimeout(() => {
+						sendByte(this.deviceId, this.serviceId, this.characteristicId, paramNum);
+							setTimeout(() => {
+								sendByte(this.deviceId, this.serviceId, this.characteristicId, (value/254)+1);
+								setTimeout(() => {
+									sendByte(this.deviceId, this.serviceId, this.characteristicId, (value%254)+1);
+									setTimeout(() => {
+										sendByte(this.deviceId, this.serviceId, this.characteristicId, 0x00);
+									}, 10);
+								}, 10);
+							}, 10); 
+					}, 10); 
+				}
+				else{
+					console.log("浮点数");
+					let result = Math.round(value * 100);
+					setTimeout(() => {
+						sendByte(this.deviceId, this.serviceId, this.characteristicId, paramNum);
+							setTimeout(() => {
+								sendByte(this.deviceId, this.serviceId, this.characteristicId, (result/254)+1);
+								setTimeout(() => {
+									sendByte(this.deviceId, this.serviceId, this.characteristicId, (result%254)+1);
+									setTimeout(() => {
+										sendByte(this.deviceId, this.serviceId, this.characteristicId, 0x00);
+									}, 10);
+								}, 10);
+							}, 10); 
+					}, 10); 
+				}
+			}
 		}
 	}
 </script>
@@ -90,6 +136,14 @@
 	    border: 1px solid #ccc;
 	    border-radius: 5px;
 	}
-
+	.single-submit-btn {
+	    margin-left: 10px;
+	    padding: 5px 10px;
+	    background-color: #05bdff;
+	    color: white;
+	    border: none;
+	    border-radius: 5px;
+	    cursor: pointer;
+	}
 
 </style>

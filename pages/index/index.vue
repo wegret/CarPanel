@@ -12,7 +12,7 @@
 			<button @click="CarStart" class="button-important">启动</button>
 			<button @click="CarStop">停止</button>
 		</view>
-		<view v-if="isConnected">
+		<view >
 			<button @click="gotoSetting">设置参数</button>
 		</view>
 

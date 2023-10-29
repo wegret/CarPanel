@@ -188,11 +188,11 @@ if (uni.restoreGlobal) {
           onClick: _cache[3] || (_cache[3] = (...args) => $options.CarStop && $options.CarStop(...args))
         }, "停止")
       ])) : vue.createCommentVNode("v-if", true),
-      $data.isConnected ? (vue.openBlock(), vue.createElementBlock("view", { key: 1 }, [
+      vue.createElementVNode("view", null, [
         vue.createElementVNode("button", {
           onClick: _cache[4] || (_cache[4] = (...args) => $options.gotoSetting && $options.gotoSetting(...args))
         }, "设置参数")
-      ])) : vue.createCommentVNode("v-if", true)
+      ])
     ]);
   }
   const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__file", "D:/CodeBase/Panel/pages/index/index.vue"]]);
@@ -346,34 +346,73 @@ if (uni.restoreGlobal) {
   const _sfc_main$1 = {
     data() {
       return {
+        // 默认的设备信息
+        deviceId: "60:E8:5B:6C:5C:8A",
+        serviceId: "0000FFE0-0000-1000-8000-00805F9B34FB",
+        characteristicId: "0000FFE1-0000-1000-8000-00805F9B34FB",
         groups: [
           {
-            groupName: "左轮PID",
+            groupName: "电机PID",
             params: [
-              { id: "Kp", label: "Kp", type: "number", value: 0 },
-              { id: "Ki", label: "Ki", type: "number", value: 0 },
-              { id: "Kd", label: "Kd", type: "number", value: 0 }
-            ]
-          },
-          {
-            groupName: "右轮PID",
-            params: [
-              { id: "Kp", label: "Kp", type: "number", value: 0 },
-              { id: "Ki", label: "Ki", type: "number", value: 0 },
-              { id: "Kd", label: "Kd", type: "number", value: 0 }
+              { id: "Kp", label: "Kp", type: "number", value: 0, num: 1, codetype: 1 },
+              { id: "Ki", label: "Ki", type: "number", value: 0, num: 2, codetype: 1 },
+              { id: "Kd", label: "Kd", type: "number", value: 0, num: 3, codetype: 1 }
             ]
           },
           {
             groupName: "速度参数",
             params: [
-              { id: "v_straight", label: "直道速度", type: "number", value: 0 },
-              { id: "v_turning", label: "弯道速度", type: "number", value: 0 }
+              { id: "v_straight", label: "目标速度", type: "number", value: 0, num: 4, codetype: 0 },
+              { id: "v_turning", label: "弯道速度", type: "number", value: 0, num: 5, codetype: 0 }
             ]
           }
         ]
       };
     },
-    methods: {}
+    onLoad() {
+    },
+    methods: {
+      checkNumberType(num) {
+        if (Number.isInteger(num)) {
+          return 1;
+        } else {
+          return 0;
+        }
+      },
+      submitSingleParameter(paramNum, value, codetype) {
+        sendByte(this.deviceId, this.serviceId, this.characteristicId, 3);
+        if (codetype == 0) {
+          formatAppLog("log", "at pages/setting/setting.vue:72", "整数");
+          setTimeout(() => {
+            sendByte(this.deviceId, this.serviceId, this.characteristicId, paramNum);
+            setTimeout(() => {
+              sendByte(this.deviceId, this.serviceId, this.characteristicId, value / 254 + 1);
+              setTimeout(() => {
+                sendByte(this.deviceId, this.serviceId, this.characteristicId, value % 254 + 1);
+                setTimeout(() => {
+                  sendByte(this.deviceId, this.serviceId, this.characteristicId, 0);
+                }, 10);
+              }, 10);
+            }, 10);
+          }, 10);
+        } else {
+          formatAppLog("log", "at pages/setting/setting.vue:87", "浮点数");
+          let result = Math.round(value * 100);
+          setTimeout(() => {
+            sendByte(this.deviceId, this.serviceId, this.characteristicId, paramNum);
+            setTimeout(() => {
+              sendByte(this.deviceId, this.serviceId, this.characteristicId, result / 254 + 1);
+              setTimeout(() => {
+                sendByte(this.deviceId, this.serviceId, this.characteristicId, result % 254 + 1);
+                setTimeout(() => {
+                  sendByte(this.deviceId, this.serviceId, this.characteristicId, 0);
+                }, 10);
+              }, 10);
+            }, 10);
+          }, 10);
+        }
+      }
+    }
   };
   function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
@@ -421,7 +460,11 @@ if (uni.restoreGlobal) {
                       void 0,
                       { number: true }
                     ]
-                  ])
+                  ]),
+                  vue.createElementVNode("button", {
+                    onClick: ($event) => $options.submitSingleParameter(param.num, param.value, param.codetype),
+                    class: "single-submit-btn"
+                  }, "提交", 8, ["onClick"])
                 ]);
               }),
               128
@@ -431,11 +474,7 @@ if (uni.restoreGlobal) {
         }),
         128
         /* KEYED_FRAGMENT */
-      )),
-      vue.createElementVNode("button", {
-        onClick: _cache[0] || (_cache[0] = (...args) => _ctx.submitParameters && _ctx.submitParameters(...args)),
-        class: "submit-btn"
-      }, "提交")
+      ))
     ]);
   }
   const PagesSettingSetting = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__file", "D:/CodeBase/Panel/pages/setting/setting.vue"]]);

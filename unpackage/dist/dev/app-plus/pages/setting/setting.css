@@ -30,5 +30,13 @@
 	    border: 1px solid #ccc;
 	    border-radius: 5px;
 }
-
+.single-submit-btn {
+	    margin-left: 10px;
+	    padding: 5px 10px;
+	    background-color: #05bdff;
+	    color: white;
+	    border: none;
+	    border-radius: 5px;
+	    cursor: pointer;
+}
 
