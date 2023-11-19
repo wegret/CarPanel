@@ -1,0 +1,6 @@
+
+.bluetooth-data {
+		/* 样式设置，例如滚动、高度限制等 */
+		max-height: 200px;
+		overflow-y: auto;
+}
