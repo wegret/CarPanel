@@ -58,9 +58,16 @@
 		background-color: #292599;
 		color: aliceblue;
 	}
+	
+	button.btn-submit{
+		background-color: #292599;
+		color: aliceblue;
+		margin-left: 10px;
+	}
 
 	.title {
 		font-size: 36rpx;
 		color: #8f8f94;
+		margin: 5px;
 	}
 </style>

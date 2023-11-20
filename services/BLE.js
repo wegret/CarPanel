@@ -9,6 +9,8 @@ export let PanelService = {
 	characteristicId: '0000FFE1-0000-1000-8000-00805F9B34FB',
 };
 
+
+
 /* 设置设备为... */
 export function setService(deviceId, serviceId, characteristicId) {
 	PanelService.deviceId = deviceId;

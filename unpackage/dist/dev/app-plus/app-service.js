@@ -50,7 +50,7 @@ if (uni.restoreGlobal) {
       deviceId: PanelService.deviceId,
       success: (res) => {
         isConnected = true;
-        formatAppLog("log", "at services/BLE.js:25", "Connect OK!");
+        formatAppLog("log", "at services/BLE.js:27", "Connect OK!");
         uni.showToast({
           title: "蓝牙连接成功！",
           icon: "success",
@@ -77,7 +77,7 @@ if (uni.restoreGlobal) {
       characteristicId: PanelService.characteristicId,
       state: true,
       success: (res) => {
-        formatAppLog("log", "at services/BLE.js:55", "Notification enabled for", PanelService.characteristicId, ":", res);
+        formatAppLog("log", "at services/BLE.js:57", "Notification enabled for", PanelService.characteristicId, ":", res);
         uni.showToast({
           title: "蓝牙接收启动！",
           icon: "success",
@@ -109,7 +109,7 @@ if (uni.restoreGlobal) {
             if (retriesLeft > 0) {
               attemptSend(retriesLeft - 1);
             } else {
-              formatAppLog("error", "at services/BLE.js:90", "Fail to send after retries!", err);
+              formatAppLog("error", "at services/BLE.js:92", "Fail to send after retries!", err);
               reject(err);
             }
           }
@@ -130,7 +130,7 @@ if (uni.restoreGlobal) {
       characteristicId: PanelService.characteristicId,
       value: buffer,
       success: function(res) {
-        formatAppLog("log", "at services/BLE.js:115", "Data sent successfully:", res);
+        formatAppLog("log", "at services/BLE.js:117", "Data sent successfully:", res);
         uni.showToast({
           title: "发送成功！",
           icon: "success",
@@ -138,7 +138,7 @@ if (uni.restoreGlobal) {
         });
       },
       fail: function(err) {
-        formatAppLog("error", "at services/BLE.js:123", "Failed to send data:", err);
+        formatAppLog("error", "at services/BLE.js:125", "Failed to send data:", err);
         uni.showToast({
           title: "发送失败！",
           icon: "success",
@@ -154,24 +154,78 @@ if (uni.restoreGlobal) {
     }
     return target;
   };
+  const _sfc_main$4 = {
+    name: "OutputStream",
+    props: {
+      inputString: {
+        type: String,
+        default: ""
+      }
+    },
+    data() {
+      return {
+        LineText: []
+      };
+    },
+    watch: {
+      inputString: {
+        immediate: true,
+        handler(newVal) {
+          this.LineText.push(newVal);
+          formatAppLog("log", "at components/OutputStream.vue:29", "Output!", newVal);
+        }
+      }
+    },
+    methods: {
+      AddOneLine() {
+      }
+    }
+  };
+  function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock(
+      vue.Fragment,
+      null,
+      [
+        vue.createElementVNode("text", null, " STREAM "),
+        vue.createElementVNode("view", { class: "container" }, [
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($data.LineText, (line) => {
+              return vue.openBlock(), vue.createElementBlock("view", null, " Hello ");
+            }),
+            256
+            /* UNKEYED_FRAGMENT */
+          ))
+        ])
+      ],
+      64
+      /* STABLE_FRAGMENT */
+    );
+  }
+  const OutputStream = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-bd20f49f"], ["__file", "D:/CodeBase/Panel/components/OutputStream.vue"]]);
   const _sfc_main$3 = {
+    components: {
+      OutputStream
+    },
     data() {
       return {
         title: "Panel",
         IndexIsConnected: false,
         // 收到的信息队列
-        byteQueue: []
+        byteQueue: [],
+        streamText: ""
       };
     },
     onShow() {
       this.IndexIsConnected = isConnected;
-      formatAppLog("log", "at pages/index/index.vue:50", "Connection State:", this.IndexIsConnected);
+      formatAppLog("log", "at pages/index/index.vue:57", "Connection State:", this.IndexIsConnected);
       if (this.IndexIsConnected)
-        formatAppLog("log", "at pages/index/index.vue:52", "DeviceId:", PanelService.deviceId);
+        formatAppLog("log", "at pages/index/index.vue:59", "DeviceId:", PanelService.deviceId);
     },
     onLoad() {
       uni.onBLECharacteristicValueChange((res) => {
-        formatAppLog("log", "at pages/index/index.vue:56", "Receive!");
+        formatAppLog("log", "at pages/index/index.vue:63", "Receive!");
         this.extractBytesFromBuffer(res.value);
       });
     },
@@ -215,13 +269,16 @@ if (uni.restoreGlobal) {
             this.handleMessage();
         }
       },
+      // 处理当前命令行
       handleMessage() {
-        formatAppLog("log", "at pages/index/index.vue:107", "Line", this.byteQueue);
+        formatAppLog("log", "at pages/index/index.vue:115", "Line", this.byteQueue);
+        this.streamText = this.byteQueue.join(",") + ";";
         this.byteQueue = [];
       }
     }
   };
   function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+    const _component_OutputStream = vue.resolveComponent("OutputStream");
     return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
       vue.createElementVNode("view", null, [
         $data.IndexIsConnected ? (vue.openBlock(), vue.createElementBlock("button", {
@@ -254,7 +311,8 @@ if (uni.restoreGlobal) {
         vue.createElementVNode("button", {
           onClick: _cache[5] || (_cache[5] = (...args) => $options.gotoSetting && $options.gotoSetting(...args))
         }, "设置参数")
-      ])
+      ]),
+      vue.createVNode(_component_OutputStream, { inputString: $data.streamText }, null, 8, ["inputString"])
     ]);
   }
   const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__file", "D:/CodeBase/Panel/pages/index/index.vue"]]);
@@ -359,24 +417,55 @@ if (uni.restoreGlobal) {
   const _sfc_main$1 = {
     data() {
       return {
-        // 默认的设备信息
-        deviceId: "60:E8:5B:6C:5C:8A",
-        serviceId: "0000FFE0-0000-1000-8000-00805F9B34FB",
-        characteristicId: "0000FFE1-0000-1000-8000-00805F9B34FB",
         groups: [
           {
             groupName: "电机PID",
             params: [
-              { id: "Kp", label: "Kp", type: "number", value: 0, num: 1, codetype: 1 },
-              { id: "Ki", label: "Ki", type: "number", value: 0, num: 2, codetype: 1 },
-              { id: "Kd", label: "Kd", type: "number", value: 0, num: 3, codetype: 1 }
+              {
+                id: "Kp",
+                label: "Kp",
+                type: "number",
+                value: 0,
+                num: 1,
+                codetype: 1
+              },
+              {
+                id: "Ki",
+                label: "Ki",
+                type: "number",
+                value: 0,
+                num: 2,
+                codetype: 1
+              },
+              {
+                id: "Kd",
+                label: "Kd",
+                type: "number",
+                value: 0,
+                num: 3,
+                codetype: 1
+              }
             ]
           },
           {
             groupName: "速度参数",
             params: [
-              { id: "v_straight", label: "目标速度", type: "number", value: 0, num: 4, codetype: 0 },
-              { id: "v_turning", label: "弯道速度", type: "number", value: 0, num: 5, codetype: 0 }
+              {
+                id: "v_straight",
+                label: "目标速度",
+                type: "number",
+                value: 0,
+                num: 4,
+                codetype: 0
+              },
+              {
+                id: "v_turning",
+                label: "弯道速度",
+                type: "number",
+                value: 0,
+                num: 5,
+                codetype: 0
+              }
             ]
           }
         ]
@@ -392,36 +481,27 @@ if (uni.restoreGlobal) {
           return 0;
         }
       },
-      submitSingleParameter(paramNum, value, codetype) {
-        sendByte(this.deviceId, this.serviceId, this.characteristicId);
+      async sendByteAsync(byte) {
+        await new Promise((resolve) => {
+          sendByte(byte);
+          setTimeout(resolve, 10);
+        });
+      },
+      async submitSingleParameter(paramNum, value, codetype) {
+        await this.sendByteAsync(3);
         if (codetype == 0) {
-          formatAppLog("log", "at pages/setting/setting.vue:72", "整数");
-          setTimeout(() => {
-            sendByte(this.deviceId, this.serviceId, this.characteristicId);
-            setTimeout(() => {
-              sendByte(this.deviceId, this.serviceId, this.characteristicId);
-              setTimeout(() => {
-                sendByte(this.deviceId, this.serviceId, this.characteristicId);
-                setTimeout(() => {
-                  sendByte(this.deviceId, this.serviceId, this.characteristicId);
-                }, 10);
-              }, 10);
-            }, 10);
-          }, 10);
+          formatAppLog("log", "at pages/setting/setting.vue:101", "整数");
+          await this.sendByteAsync(paramNum);
+          await this.sendByteAsync(value / 254 + 1);
+          await this.sendByteAsync(value % 254 + 1);
+          await this.sendByteAsync(0);
         } else {
-          formatAppLog("log", "at pages/setting/setting.vue:87", "浮点数");
-          setTimeout(() => {
-            sendByte(this.deviceId, this.serviceId, this.characteristicId);
-            setTimeout(() => {
-              sendByte(this.deviceId, this.serviceId, this.characteristicId);
-              setTimeout(() => {
-                sendByte(this.deviceId, this.serviceId, this.characteristicId);
-                setTimeout(() => {
-                  sendByte(this.deviceId, this.serviceId, this.characteristicId);
-                }, 10);
-              }, 10);
-            }, 10);
-          }, 10);
+          formatAppLog("log", "at pages/setting/setting.vue:107", "浮点数");
+          let result = Math.round(value * 100);
+          await this.sendByteAsync(paramNum);
+          await this.sendByteAsync(result / 254 + 1);
+          await this.sendByteAsync(result % 254 + 1);
+          await this.sendByteAsync(0);
         }
       }
     }
@@ -475,7 +555,7 @@ if (uni.restoreGlobal) {
                   ]),
                   vue.createElementVNode("button", {
                     onClick: ($event) => $options.submitSingleParameter(param.num, param.value, param.codetype),
-                    class: "single-submit-btn"
+                    class: "button btn-submit"
                   }, "提交", 8, ["onClick"])
                 ]);
               }),

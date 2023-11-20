@@ -43,7 +43,13 @@ uni-button.btn-important {
 		background-color: #292599;
 		color: aliceblue;
 }
+uni-button.btn-submit{
+		background-color: #292599;
+		color: aliceblue;
+		margin-left: 10px;
+}
 .title {
 		font-size: 1.125rem;
 		color: #8f8f94;
+		margin: 5px;
 }

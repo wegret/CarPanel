@@ -19,6 +19,8 @@
 			<button @click="gotoSetting">设置参数</button>
 		</view>
 
+		<OutputStream :inputString="streamText"></OutputStream>
+
 	</view>
 </template>
 
@@ -34,7 +36,12 @@
 		enableBluetoothListener // 开启蓝牙接受
 	} from '../../services/BLE.js'
 
+	import OutputStream from "../../components/OutputStream.vue";
+
 	export default {
+		components: {
+			OutputStream
+		},
 		data() {
 			return {
 				title: 'Panel',
@@ -42,7 +49,7 @@
 
 				// 收到的信息队列
 				byteQueue: [],
-
+				streamText: ''
 			}
 		},
 		onShow() {
@@ -103,9 +110,13 @@
 				}
 			},
 
+			// 处理当前命令行
 			handleMessage() {
 				console.log("Line", this.byteQueue);
+				const now = Date.now(); // 获取当前的时间戳
+				this.streamText = this.byteQueue.join(',') + ';'; // 添加时间戳
 				this.byteQueue = [];
+
 			}
 
 		}
