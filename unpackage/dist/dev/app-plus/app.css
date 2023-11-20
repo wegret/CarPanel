@@ -4,35 +4,44 @@
 	/*每个页面公共css */
 	/* 字体 */
 @font-face {
-	    font-family: 'Noto-regular'; 
-	    src: url('static/font/NotoSerifSC-Regular.otf');
+		font-family: 'Noto-regular';
+		src: url('static/font/NotoSerifSC-Regular.otf');
 }
-	
+
 	/* 设置全局字体 */
-body, uni-button, uni-input, uni-textarea {
-	    font-family: 'Noto-regular', sans-serif;
+body,
+	uni-button,
+	uni-input,
+	uni-textarea {
+		font-family: 'Noto-regular', sans-serif;
 }
-	/* 按钮样式 */
-uni-button {
-		margin-top: 0.625rem;
-		padding: 0.3125rem 0.625rem;
-}
-.button-important {
-		margin-bottom: 10px;
-		border-radius: 0.3125rem;
-		background-color: #007AFF;
-		color: #fff;
-}
+
+	/* 最外围内容 */
 .content {
 		display: flex;
 		flex-direction: column;
-		align-items: center;
 		justify-content: center;
 		padding: 20px;
+		margin: 20px;
 }
-.text-area {
-		display: flex;
-		justify-content: center;
+
+	/* 按钮样式 */
+uni-button {
+		margin: 0.625rem;
+		padding: 0.3125rem 0.625rem;
+		border-radius: 0.3125rem;
+}
+uni-button.btn-connected {
+		background-color: #00aa00;
+		color: aliceblue;
+}
+uni-button.btn-unconnected {
+		background-color: #999999;
+		color: aliceblue;
+}
+uni-button.btn-important {
+		background-color: #292599;
+		color: aliceblue;
 }
 .title {
 		font-size: 1.125rem;

@@ -39,30 +39,112 @@ if (uni.restoreGlobal) {
     }
   }
   const maxRetries = 3;
-  function sendByte(deviceId, serviceId, characteristicId, byteValue) {
+  let isConnected = false;
+  let PanelService = {
+    deviceId: "60:E8:5B:6C:5C:8A",
+    serviceId: "0000FFE0-0000-1000-8000-00805F9B34FB",
+    characteristicId: "0000FFE1-0000-1000-8000-00805F9B34FB"
+  };
+  function connectService() {
+    uni.createBLEConnection({
+      deviceId: PanelService.deviceId,
+      success: (res) => {
+        isConnected = true;
+        formatAppLog("log", "at services/BLE.js:25", "Connect OK!");
+        uni.showToast({
+          title: "蓝牙连接成功！",
+          icon: "success",
+          duration: 2e3
+        });
+        setTimeout(function() {
+          uni.navigateBack();
+        }, 500);
+      },
+      fail: (err) => {
+        isConnected = false;
+        uni.showToast({
+          title: "蓝牙连接失败！",
+          icon: "fail",
+          duration: 2e3
+        });
+      }
+    });
+  }
+  function enableBluetoothListener() {
+    uni.notifyBLECharacteristicValueChange({
+      deviceId: PanelService.deviceId,
+      serviceId: PanelService.serviceId,
+      characteristicId: PanelService.characteristicId,
+      state: true,
+      success: (res) => {
+        formatAppLog("log", "at services/BLE.js:55", "Notification enabled for", PanelService.characteristicId, ":", res);
+        uni.showToast({
+          title: "蓝牙接收启动！",
+          icon: "success",
+          duration: 2e3
+        });
+      },
+      fail: (err) => {
+        uni.showToast({
+          title: "启动失败！",
+          icon: "fail",
+          duration: 2e3
+        });
+      }
+    });
+  }
+  function sendByte(byteValue) {
     return new Promise((resolve, reject) => {
       let buffer = new Uint8Array([byteValue]).buffer;
       function attemptSend(retriesLeft) {
         uni.writeBLECharacteristicValue({
-          deviceId,
-          serviceId,
-          characteristicId,
+          deviceId: PanelService.deviceId,
+          serviceId: PanelService.serviceId,
+          characteristicId: PanelService.characteristicId,
           value: buffer,
           success: function(res) {
-            formatAppLog("log", "at services/BLE.js:14", `Sent: ${String(typeof res)}`);
             resolve(res);
           },
           fail: function(err) {
             if (retriesLeft > 0) {
               attemptSend(retriesLeft - 1);
             } else {
-              formatAppLog("error", "at services/BLE.js:21", "Fail to send after retries!", err);
+              formatAppLog("error", "at services/BLE.js:90", "Fail to send after retries!", err);
               reject(err);
             }
           }
         });
       }
       attemptSend(maxRetries);
+    });
+  }
+  function sendUTFString(str) {
+    let buffer = new ArrayBuffer(str.length);
+    let dataView = new DataView(buffer);
+    for (let i = 0; i < str.length; i++) {
+      dataView.setUint8(i, str.charCodeAt(i));
+    }
+    uni.writeBLECharacteristicValue({
+      deviceId: PanelService.deviceId,
+      serviceId: PanelService.serviceId,
+      characteristicId: PanelService.characteristicId,
+      value: buffer,
+      success: function(res) {
+        formatAppLog("log", "at services/BLE.js:115", "Data sent successfully:", res);
+        uni.showToast({
+          title: "发送成功！",
+          icon: "success",
+          duration: 2e3
+        });
+      },
+      fail: function(err) {
+        formatAppLog("error", "at services/BLE.js:123", "Failed to send data:", err);
+        uni.showToast({
+          title: "发送失败！",
+          icon: "success",
+          duration: 2e3
+        });
+      }
     });
   }
   const _export_sfc = (sfc, props) => {
@@ -76,130 +158,93 @@ if (uni.restoreGlobal) {
     data() {
       return {
         title: "Panel",
-        isConnected: false,
-        // 是否已连接蓝牙
-        isStarted: false,
-        // 是否已启动小车
-        // 默认的设备信息
-        deviceId: "60:E8:5B:6C:5C:8A",
-        serviceId: "0000FFE0-0000-1000-8000-00805F9B34FB",
-        characteristicId: "0000FFE1-0000-1000-8000-00805F9B34FB",
-        // 收到的信息
-        receiveData: []
+        IndexIsConnected: false,
+        // 收到的信息队列
+        byteQueue: []
       };
     },
     onShow() {
-      formatAppLog("log", "at pages/index/index.vue:49", "State:", this.isConnected);
-      formatAppLog("log", "at pages/index/index.vue:50", "DeviceId:", this.deviceId);
+      this.IndexIsConnected = isConnected;
+      formatAppLog("log", "at pages/index/index.vue:50", "Connection State:", this.IndexIsConnected);
+      if (this.IndexIsConnected)
+        formatAppLog("log", "at pages/index/index.vue:52", "DeviceId:", PanelService.deviceId);
     },
     onLoad() {
       uni.onBLECharacteristicValueChange((res) => {
-        handleReceiveData(res);
-        formatAppLog("log", "at pages/index/index.vue:55", "Received data:", res);
+        formatAppLog("log", "at pages/index/index.vue:56", "Receive!");
+        this.extractBytesFromBuffer(res.value);
       });
     },
     methods: {
-      handleReceiveData(data) {
-        this.receiveData.push(data);
-        if (this.receiveData.length > 100) {
-          this.receiveData.shift();
-        }
-      },
+      /* 跳转：蓝牙页面 */
       gotoBluetooth() {
         uni.navigateTo({
           url: "/pages/bluetooth/bluetooth"
         });
       },
+      /* 跳转：设置页面 */
       gotoSetting() {
         uni.navigateTo({
           url: "/pages/setting/setting"
         });
       },
-      enableBluetoothListener(serviceId, characteristicId) {
-        uni.notifyBLECharacteristicValueChange({
-          deviceId: this.deviceId,
-          serviceId,
-          characteristicId,
-          state: true,
-          success: (res) => {
-            formatAppLog("log", "at pages/index/index.vue:84", "Notification enabled for", characteristicId, ":", res);
-            uni.showToast({
-              title: "蓝牙接收启动！",
-              icon: "success",
-              duration: 2e3
-            });
-          },
-          fail: (err) => {
-            uni.showToast({
-              title: "启动失败！",
-              icon: "fail",
-              duration: 2e3
-            });
-          }
-        });
-      },
+      /* 开启通信 */
       ListenerStart() {
-        this.enableBluetoothListener(
-          "0000FFE0-0000-1000-8000-00805F9B34FB",
-          "0000FFE1-0000-1000-8000-00805F9B34FB"
-        );
+        enableBluetoothListener();
       },
       test() {
-        let buffer = new ArrayBuffer("hello world".length);
-        let dataView = new DataView(buffer);
-        for (let i = 0; i < "hello world".length; i++) {
-          dataView.setUint8(i, "hello world".charCodeAt(i));
-        }
-        uni.writeBLECharacteristicValue({
-          deviceId: this.deviceId,
-          serviceId: "0000FFE0-0000-1000-8000-00805F9B34FB",
-          characteristicId: "0000FFE1-0000-1000-8000-00805F9B34FB",
-          //serviceId: '0000FFF0-0000-1000-8000-00805F9B34FB',
-          //characteristicId: '0000FFF5-0000-1000-8000-00805F9B34FB',
-          value: buffer,
-          success: function(res) {
-            formatAppLog("log", "at pages/index/index.vue:169", "Data sent successfully:", res);
-          },
-          fail: function(err) {
-            formatAppLog("error", "at pages/index/index.vue:172", "Failed to send data:", err);
-          }
-        });
+        sendUTFString("Hello world!");
       },
       /* 启动：发送01 */
       CarStart() {
-        sendByte(this.deviceId, this.serviceId, this.characteristicId, 1);
-        sendByte(this.deviceId, this.serviceId, this.characteristicId, 0);
+        sendByte(1);
+        sendByte(0);
       },
       /* 停止：发送02 */
       CarStop() {
-        sendByte(this.deviceId, this.serviceId, this.characteristicId, 2);
-        sendByte(this.deviceId, this.serviceId, this.characteristicId, 0);
+        sendByte(2);
+        sendByte(0);
+      },
+      // 从ArrayBuffer中提取每个字节的值
+      extractBytesFromBuffer(buffer) {
+        const byteArray = new Uint8Array(buffer);
+        for (let i = 0; i < byteArray.length; i++) {
+          if (byteArray[i] != 0)
+            this.byteQueue.push(byteArray[i]);
+          else
+            this.handleMessage();
+        }
+      },
+      handleMessage() {
+        formatAppLog("log", "at pages/index/index.vue:107", "Line", this.byteQueue);
+        this.byteQueue = [];
       }
     }
   };
   function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
       vue.createElementVNode("view", null, [
-        vue.createElementVNode(
-          "button",
-          {
-            onClick: _cache[0] || (_cache[0] = (...args) => $options.gotoBluetooth && $options.gotoBluetooth(...args))
-          },
-          vue.toDisplayString($data.isConnected ? "蓝牙已链接" : "蓝牙未链接"),
-          1
-          /* TEXT */
-        )
+        $data.IndexIsConnected ? (vue.openBlock(), vue.createElementBlock("button", {
+          key: 0,
+          class: "button btn-connected"
+        }, "蓝牙已链接")) : (vue.openBlock(), vue.createElementBlock("button", {
+          key: 1,
+          class: "button btn-unconnected",
+          onClick: _cache[0] || (_cache[0] = (...args) => $options.gotoBluetooth && $options.gotoBluetooth(...args))
+        }, "蓝牙未链接"))
       ]),
-      $data.isConnected ? (vue.openBlock(), vue.createElementBlock("view", { key: 0 }, [
+      $data.IndexIsConnected ? (vue.openBlock(), vue.createElementBlock("view", { key: 0 }, [
         vue.createElementVNode("button", {
           onClick: _cache[1] || (_cache[1] = (...args) => $options.test && $options.test(...args))
         }, "测试通信"),
         vue.createElementVNode("button", {
           onClick: _cache[2] || (_cache[2] = (...args) => $options.ListenerStart && $options.ListenerStart(...args))
-        }, "开启接收"),
+        }, "开启接收")
+      ])) : vue.createCommentVNode("v-if", true),
+      $data.IndexIsConnected ? (vue.openBlock(), vue.createElementBlock("view", { key: 1 }, [
         vue.createElementVNode("button", {
           onClick: _cache[3] || (_cache[3] = (...args) => $options.CarStart && $options.CarStart(...args)),
-          class: "button-important"
+          class: "button btn-important"
         }, "启动"),
         vue.createElementVNode("button", {
           onClick: _cache[4] || (_cache[4] = (...args) => $options.CarStop && $options.CarStop(...args))
@@ -209,23 +254,6 @@ if (uni.restoreGlobal) {
         vue.createElementVNode("button", {
           onClick: _cache[5] || (_cache[5] = (...args) => $options.gotoSetting && $options.gotoSetting(...args))
         }, "设置参数")
-      ]),
-      vue.createElementVNode("view", { class: "bluetooth-data" }, [
-        (vue.openBlock(true), vue.createElementBlock(
-          vue.Fragment,
-          null,
-          vue.renderList(_ctx.bluetoothData, (line, index) => {
-            return vue.openBlock(), vue.createElementBlock(
-              "text",
-              { key: index },
-              vue.toDisplayString(line),
-              1
-              /* TEXT */
-            );
-          }),
-          128
-          /* KEYED_FRAGMENT */
-        ))
       ])
     ]);
   }
@@ -234,6 +262,7 @@ if (uni.restoreGlobal) {
     data() {
       return {
         devices: []
+        // 搜索到的设备列表
       };
     },
     onLoad() {
@@ -244,7 +273,7 @@ if (uni.restoreGlobal) {
               this.addBluetoothDeviceListener();
             },
             fail: (err) => {
-              formatAppLog("error", "at pages/bluetooth/bluetooth.vue:44", "Failed to Find Bluetooth", err);
+              formatAppLog("error", "at pages/bluetooth/bluetooth.vue:50", "Failed to Find Bluetooth", err);
               uni.showToast({
                 title: "蓝牙启动失败！",
                 icon: "fail",
@@ -254,7 +283,7 @@ if (uni.restoreGlobal) {
           });
         },
         fail: (err) => {
-          formatAppLog("error", "at pages/bluetooth/bluetooth.vue:54", "Failed to open Bluetooth", err);
+          formatAppLog("error", "at pages/bluetooth/bluetooth.vue:60", "Failed to open Bluetooth", err);
           uni.showToast({
             title: "蓝牙启动失败！",
             icon: "fail",
@@ -270,66 +299,16 @@ if (uni.restoreGlobal) {
           success: (res) => {
           },
           fail: (err) => {
-            formatAppLog("error", "at pages/bluetooth/bluetooth.vue:71", "Bluetooth Adapter FAILED", err);
+            formatAppLog("error", "at pages/bluetooth/bluetooth.vue:75", "Bluetooth Adapter FAILED", err);
           }
         });
         uni.onBluetoothDeviceFound((res) => {
           this.devices = [...this.devices, ...res.devices];
         });
       },
-      // 选中设备
-      selectDevice(device) {
-        const pages = getCurrentPages();
-        const homePage = pages[0];
-        uni.createBLEConnection({
-          deviceId: device.deviceId,
-          success: (res) => {
-            homePage.isConnected = true;
-            formatAppLog("log", "at pages/bluetooth/bluetooth.vue:92", "Connect OK!");
-            uni.showToast({
-              title: "蓝牙连接成功！",
-              icon: "success",
-              duration: 2e3
-            });
-            setTimeout(function() {
-              uni.navigateBack();
-            }, 500);
-          },
-          fail: (err) => {
-            uni.showToast({
-              title: "蓝牙连接失败！",
-              icon: "fail",
-              duration: 2e3
-            });
-          }
-        });
-      },
       // 选择默认设备
       selectDevice_Default() {
-        const pages = getCurrentPages();
-        const homePage = pages[0];
-        uni.createBLEConnection({
-          deviceId: pages[0].deviceId,
-          success: (res) => {
-            homePage.isConnected = true;
-            formatAppLog("log", "at pages/bluetooth/bluetooth.vue:122", "Connect OK!");
-            uni.showToast({
-              title: "蓝牙连接成功！",
-              icon: "success",
-              duration: 2e3
-            });
-            setTimeout(function() {
-              uni.navigateBack();
-            }, 500);
-          },
-          fail: (err) => {
-            uni.showToast({
-              title: "蓝牙连接失败！",
-              icon: "fail",
-              duration: 2e3
-            });
-          }
-        });
+        connectService();
       }
     }
   };
@@ -348,7 +327,7 @@ if (uni.restoreGlobal) {
         vue.renderList($data.devices, (device) => {
           return vue.openBlock(), vue.createElementBlock("view", {
             key: device.deviceId,
-            onClick: ($event) => $options.selectDevice(device),
+            onClick: ($event) => _ctx.selectDevice(device),
             class: "device-box"
           }, [
             vue.createElementVNode("view", null, [
@@ -414,32 +393,31 @@ if (uni.restoreGlobal) {
         }
       },
       submitSingleParameter(paramNum, value, codetype) {
-        sendByte(this.deviceId, this.serviceId, this.characteristicId, 3);
+        sendByte(this.deviceId, this.serviceId, this.characteristicId);
         if (codetype == 0) {
           formatAppLog("log", "at pages/setting/setting.vue:72", "整数");
           setTimeout(() => {
-            sendByte(this.deviceId, this.serviceId, this.characteristicId, paramNum);
+            sendByte(this.deviceId, this.serviceId, this.characteristicId);
             setTimeout(() => {
-              sendByte(this.deviceId, this.serviceId, this.characteristicId, value / 254 + 1);
+              sendByte(this.deviceId, this.serviceId, this.characteristicId);
               setTimeout(() => {
-                sendByte(this.deviceId, this.serviceId, this.characteristicId, value % 254 + 1);
+                sendByte(this.deviceId, this.serviceId, this.characteristicId);
                 setTimeout(() => {
-                  sendByte(this.deviceId, this.serviceId, this.characteristicId, 0);
+                  sendByte(this.deviceId, this.serviceId, this.characteristicId);
                 }, 10);
               }, 10);
             }, 10);
           }, 10);
         } else {
           formatAppLog("log", "at pages/setting/setting.vue:87", "浮点数");
-          let result = Math.round(value * 100);
           setTimeout(() => {
-            sendByte(this.deviceId, this.serviceId, this.characteristicId, paramNum);
+            sendByte(this.deviceId, this.serviceId, this.characteristicId);
             setTimeout(() => {
-              sendByte(this.deviceId, this.serviceId, this.characteristicId, result / 254 + 1);
+              sendByte(this.deviceId, this.serviceId, this.characteristicId);
               setTimeout(() => {
-                sendByte(this.deviceId, this.serviceId, this.characteristicId, result % 254 + 1);
+                sendByte(this.deviceId, this.serviceId, this.characteristicId);
                 setTimeout(() => {
-                  sendByte(this.deviceId, this.serviceId, this.characteristicId, 0);
+                  sendByte(this.deviceId, this.serviceId, this.characteristicId);
                 }, 10);
               }, 10);
             }, 10);
