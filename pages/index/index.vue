@@ -19,7 +19,16 @@
 			<button @click="gotoSetting">设置参数</button>
 		</view>
 
+		<view>
+			<button @click="gotoDebugger">调试模式</button>
+		</view>
+
 		<OutputStream :inputString="streamText"></OutputStream>
+
+		<view v-if="IndexIsConnected" v-for="state in states" class="state-container">
+			<text class="state-text-title">{{state.label}}</text>
+			<text class="state-text-detail">{{state.value}}</text>
+		</view>
 
 	</view>
 </template>
@@ -49,7 +58,17 @@
 
 				// 收到的信息队列
 				byteQueue: [],
-				streamText: ''
+				streamText: {
+					value: ''
+				},
+				states: [{
+					id: 'Angle',
+					label: 'Angle',
+					type: 'number',
+					value: 0,
+					num: 1,
+					codetype: 1
+				}, ]
 			}
 		},
 		onShow() {
@@ -77,6 +96,12 @@
 					url: "/pages/setting/setting"
 				});
 			},
+			/* 跳转：调试模式 */
+			gotoDebugger() {
+				uni.navigateTo({
+					url: "/pages/debugger/debugger"
+				});
+			},
 
 			/* 开启通信 */
 			ListenerStart() {
@@ -97,8 +122,6 @@
 				sendByte(0x00);
 			},
 
-
-
 			// 从ArrayBuffer中提取每个字节的值
 			extractBytesFromBuffer(buffer) {
 				const byteArray = new Uint8Array(buffer);
@@ -109,12 +132,28 @@
 						this.handleMessage();
 				}
 			},
+			getHex_value_2(a, b) {
+				return ((a - 1) * 254) + (b - 1);
+			},
+
 
 			// 处理当前命令行
 			handleMessage() {
 				console.log("Line", this.byteQueue);
-				const now = Date.now(); // 获取当前的时间戳
-				this.streamText = this.byteQueue.join(',') + ';'; // 添加时间戳
+				this.streamText = {
+					key: Date.now(),
+					value: this.byteQueue.join(',') + ';'
+				};
+				if (this.byteQueue[0] == '0x02') { // 状态
+					let num = this.byteQueue[1];
+					let value = this.getHex_value_2(this.byteQueue[2], this.byteQueue[3]);
+
+					// 在states中找到对应的num的state，更新value
+					let stateToUpdate = this.states.find(state => state.num === num);
+					if (stateToUpdate) {
+						stateToUpdate.value = value;
+					}
+				}
 				this.byteQueue = [];
 
 			}
@@ -124,4 +163,27 @@
 </script>
 
 <style>
+	.state-container {
+	    display: flex;
+	    flex-direction: row;
+		border-radius: 8px;
+		border: 1px solid #0055ff;
+	}
+	
+	.state-text-title {
+	    flex: 1; /* 占据 25% 的宽度 */
+	    max-width: 25%;
+		border-radius: 4px;
+		padding: 5px;
+		background-color: #0055ff;
+		color: aliceblue;
+	}
+	
+	.state-text-detail {
+	    flex: 3; /* 占据 75% 的宽度 */
+	    max-width: 75%;
+		padding: 5px;
+		padding-left: 10px;
+	}
+
 </style>
