@@ -1,0 +1,46 @@
+
+.radio-inputs {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 20px;
+		background-color: var(--back-color);
+		/* 应用主题背景色 */
+		color: var(--text-color);
+		/* 应用主题文本色 */
+		border-radius: 8px;
+		border: 1px solid #00aaff;
+		padding: 10px;
+}
+.radio-tile {
+		display: flex;
+		align-items: center;
+		margin: 10px 0;
+		cursor: pointer;
+}
+.radio-input {
+		background-color: transparent;
+		border-radius: 50%;
+}
+.module-container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 20px;
+		background-color: var(--back-color);
+		/* 应用主题背景色 */
+		color: var(--text-color);
+		/* 应用主题文本色 */
+		border-radius: 8px;
+}
+.text-log {
+		padding: 20px;
+}
+uni-label {
+		display: flex;
+		flex-direction: column;
+		align-items: left;
+		margin-bottom: 10px;
+		/* 可以调整间距 */
+}

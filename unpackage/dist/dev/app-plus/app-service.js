@@ -154,57 +154,143 @@ if (uni.restoreGlobal) {
     }
     return target;
   };
-  const _sfc_main$4 = {
+  const _sfc_main$6 = {
     name: "OutputStream",
     props: {
       inputString: {
-        type: String,
-        default: ""
+        type: Object,
+        default: () => ({})
       }
     },
     data() {
       return {
-        LineText: []
+        LineText: [],
+        scrollIntoViewId: "",
+        showTimestamp: false,
+        checkboxes: [
+          {
+            value: "Stamp",
+            name: "时间戳",
+            checked: false
+          }
+        ]
       };
     },
     watch: {
       inputString: {
         immediate: true,
+        deep: true,
         handler(newVal) {
-          this.LineText.push(newVal);
-          formatAppLog("log", "at components/OutputStream.vue:29", "Output!", newVal);
+          if (newVal && newVal.value) {
+            const timestamp = (/* @__PURE__ */ new Date()).toLocaleTimeString();
+            this.LineText.push({
+              text: newVal.value,
+              timestamp
+            });
+            this.scrollIntoViewId = "line" + (this.LineText.length - 1);
+          }
         }
       }
     },
     methods: {
-      AddOneLine() {
+      toggleTimestamp() {
+        this.showTimestamp = !this.showTimestamp;
+      },
+      checkboxChange: function(e) {
+        var values = e.detail.value;
+        this.checkboxes.forEach((checkbox) => {
+          checkbox.checked = values.includes(checkbox.value);
+        });
+        this.showTimestamp = this.checkboxes[0].checked;
       }
     }
   };
-  function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock(
       vue.Fragment,
       null,
       [
-        vue.createElementVNode("text", null, " STREAM "),
+        vue.createElementVNode(
+          "checkbox-group",
+          {
+            onChange: _cache[0] || (_cache[0] = (...args) => $options.checkboxChange && $options.checkboxChange(...args))
+          },
+          [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($data.checkboxes, (checkbox) => {
+                return vue.openBlock(), vue.createElementBlock("label", {
+                  class: "switch",
+                  key: checkbox.value
+                }, [
+                  vue.createElementVNode("checkbox", {
+                    class: "toggle",
+                    value: checkbox.value,
+                    checked: checkbox.checked
+                  }, null, 8, ["value", "checked"]),
+                  vue.createElementVNode(
+                    "span",
+                    {
+                      class: vue.normalizeClass(["slider", { "slider-checked": checkbox.checked }])
+                    },
+                    null,
+                    2
+                    /* CLASS */
+                  ),
+                  vue.createElementVNode("text", null, "时间戳")
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ],
+          32
+          /* HYDRATE_EVENTS */
+        ),
         vue.createElementVNode("view", { class: "container" }, [
-          (vue.openBlock(true), vue.createElementBlock(
-            vue.Fragment,
-            null,
-            vue.renderList($data.LineText, (line) => {
-              return vue.openBlock(), vue.createElementBlock("view", null, " Hello ");
-            }),
-            256
-            /* UNKEYED_FRAGMENT */
-          ))
+          vue.createElementVNode("scroll-view", {
+            "scroll-y": "",
+            style: { "height": "100px" },
+            "scroll-into-view": $data.scrollIntoViewId
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($data.LineText, (line, index) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: index,
+                  id: "line" + index
+                }, [
+                  $data.showTimestamp ? (vue.openBlock(), vue.createElementBlock(
+                    "span",
+                    {
+                      key: 0,
+                      class: "timeStamp"
+                    },
+                    "(" + vue.toDisplayString(line.timestamp) + ")",
+                    1
+                    /* TEXT */
+                  )) : vue.createCommentVNode("v-if", true),
+                  vue.createTextVNode(
+                    " " + vue.toDisplayString(line.text),
+                    1
+                    /* TEXT */
+                  )
+                ], 8, ["id"]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ], 8, ["scroll-into-view"])
         ])
       ],
       64
       /* STABLE_FRAGMENT */
     );
   }
-  const OutputStream = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-bd20f49f"], ["__file", "D:/CodeBase/Panel/components/OutputStream.vue"]]);
-  const _sfc_main$3 = {
+  const OutputStream = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-bd20f49f"], ["__file", "D:/CodeBase/Panel/components/OutputStream.vue"]]);
+  const _sfc_main$5 = {
     components: {
       OutputStream
     },
@@ -214,18 +300,28 @@ if (uni.restoreGlobal) {
         IndexIsConnected: false,
         // 收到的信息队列
         byteQueue: [],
-        streamText: ""
+        streamText: {
+          value: ""
+        },
+        states: [{
+          id: "Angle",
+          label: "Angle",
+          type: "number",
+          value: 0,
+          num: 1,
+          codetype: 1
+        }]
       };
     },
     onShow() {
       this.IndexIsConnected = isConnected;
-      formatAppLog("log", "at pages/index/index.vue:57", "Connection State:", this.IndexIsConnected);
+      formatAppLog("log", "at pages/index/index.vue:76", "Connection State:", this.IndexIsConnected);
       if (this.IndexIsConnected)
-        formatAppLog("log", "at pages/index/index.vue:59", "DeviceId:", PanelService.deviceId);
+        formatAppLog("log", "at pages/index/index.vue:78", "DeviceId:", PanelService.deviceId);
     },
     onLoad() {
       uni.onBLECharacteristicValueChange((res) => {
-        formatAppLog("log", "at pages/index/index.vue:63", "Receive!");
+        formatAppLog("log", "at pages/index/index.vue:82", "Receive!");
         this.extractBytesFromBuffer(res.value);
       });
     },
@@ -240,6 +336,12 @@ if (uni.restoreGlobal) {
       gotoSetting() {
         uni.navigateTo({
           url: "/pages/setting/setting"
+        });
+      },
+      /* 跳转：调试模式 */
+      gotoDebugger() {
+        uni.navigateTo({
+          url: "/pages/debugger/debugger"
         });
       },
       /* 开启通信 */
@@ -269,15 +371,29 @@ if (uni.restoreGlobal) {
             this.handleMessage();
         }
       },
+      getHex_value_2(a, b) {
+        return (a - 1) * 254 + (b - 1);
+      },
       // 处理当前命令行
       handleMessage() {
-        formatAppLog("log", "at pages/index/index.vue:115", "Line", this.byteQueue);
-        this.streamText = this.byteQueue.join(",") + ";";
+        formatAppLog("log", "at pages/index/index.vue:142", "Line", this.byteQueue);
+        this.streamText = {
+          key: Date.now(),
+          value: this.byteQueue.join(",") + ";"
+        };
+        if (this.byteQueue[0] == "0x02") {
+          let num = this.byteQueue[1];
+          let value = this.getHex_value_2(this.byteQueue[2], this.byteQueue[3]);
+          let stateToUpdate = this.states.find((state) => state.num === num);
+          if (stateToUpdate) {
+            stateToUpdate.value = value;
+          }
+        }
         this.byteQueue = [];
       }
     }
   };
-  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
     const _component_OutputStream = vue.resolveComponent("OutputStream");
     return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
       vue.createElementVNode("view", null, [
@@ -312,11 +428,40 @@ if (uni.restoreGlobal) {
           onClick: _cache[5] || (_cache[5] = (...args) => $options.gotoSetting && $options.gotoSetting(...args))
         }, "设置参数")
       ]),
-      vue.createVNode(_component_OutputStream, { inputString: $data.streamText }, null, 8, ["inputString"])
+      vue.createElementVNode("view", null, [
+        vue.createElementVNode("button", {
+          onClick: _cache[6] || (_cache[6] = (...args) => $options.gotoDebugger && $options.gotoDebugger(...args))
+        }, "调试模式")
+      ]),
+      vue.createVNode(_component_OutputStream, { inputString: $data.streamText }, null, 8, ["inputString"]),
+      (vue.openBlock(true), vue.createElementBlock(
+        vue.Fragment,
+        null,
+        vue.renderList($data.states, (state) => {
+          return vue.openBlock(), vue.createElementBlock("view", { class: "state-container" }, [
+            vue.createElementVNode(
+              "text",
+              null,
+              vue.toDisplayString(state.label),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode(
+              "text",
+              null,
+              vue.toDisplayString(state.value),
+              1
+              /* TEXT */
+            )
+          ]);
+        }),
+        256
+        /* UNKEYED_FRAGMENT */
+      ))
     ]);
   }
-  const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__file", "D:/CodeBase/Panel/pages/index/index.vue"]]);
-  const _sfc_main$2 = {
+  const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__file", "D:/CodeBase/Panel/pages/index/index.vue"]]);
+  const _sfc_main$4 = {
     data() {
       return {
         devices: []
@@ -370,7 +515,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
       vue.createElementVNode("text", null, " 搜索设备中... "),
       vue.createElementVNode("view", null, [
@@ -413,8 +558,8 @@ if (uni.restoreGlobal) {
       ))
     ]);
   }
-  const PagesBluetoothBluetooth = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__file", "D:/CodeBase/Panel/pages/bluetooth/bluetooth.vue"]]);
-  const _sfc_main$1 = {
+  const PagesBluetoothBluetooth = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__file", "D:/CodeBase/Panel/pages/bluetooth/bluetooth.vue"]]);
+  const _sfc_main$3 = {
     data() {
       return {
         groups: [
@@ -506,7 +651,7 @@ if (uni.restoreGlobal) {
       }
     }
   };
-  function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
       vue.createElementVNode("view", { class: "title" }, "参数设置"),
       (vue.openBlock(true), vue.createElementBlock(
@@ -569,10 +714,257 @@ if (uni.restoreGlobal) {
       ))
     ]);
   }
-  const PagesSettingSetting = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__file", "D:/CodeBase/Panel/pages/setting/setting.vue"]]);
+  const PagesSettingSetting = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__file", "D:/CodeBase/Panel/pages/setting/setting.vue"]]);
+  const _sfc_main$2 = {
+    data() {
+      return {
+        moduleBoxes: [
+          {
+            value: "Normal",
+            name: "普通模式",
+            checked: true,
+            code: 1
+          },
+          {
+            value: "Camera",
+            name: "图传模式",
+            checked: false,
+            code: 2
+          }
+        ],
+        selectedModuleValue: "Normal",
+        // 初始选中的值
+        checkboxes_Normal: [
+          {
+            value: "NOR_DIFFSPEED_VIS",
+            name: "是否开启差速",
+            code: 1,
+            checked: true
+          },
+          {
+            value: "NOR_STATE_MONITOR",
+            name: "是否开启状态监视",
+            code: 2,
+            checked: true
+          }
+        ],
+        checkboxes_Camera: [
+          {
+            value: "CAM_PC_VIS",
+            name: "是否传图给上位机",
+            code: 1,
+            checked: true
+          },
+          {
+            value: "CAM_TFT_VIS",
+            name: "是否传图给TFT屏幕",
+            code: 2,
+            checked: false
+          },
+          {
+            value: "CAM_SERVO_ON",
+            name: "是否开启舵机测试方向",
+            code: 3,
+            checked: false
+          }
+        ]
+      };
+    },
+    methods: {
+      onRadioChange: function(e) {
+        var values = e.detail.value;
+        for (const box of this.moduleBoxes) {
+          box.checked = values.includes(box.value);
+          if (box.checked) {
+            this.selectedModuleValue = box.value;
+            this.chooseModule(box);
+          }
+        }
+        formatAppLog("log", "at pages/debugger/debugger.vue:101", this.selectedModuleValue);
+      },
+      async sendByteAsync(byte) {
+        await new Promise((resolve) => {
+          sendByte(byte);
+          setTimeout(resolve, 10);
+        });
+      },
+      async chooseModule(box) {
+        await this.sendByteAsync(4);
+        await this.sendByteAsync(box.code);
+        await this.sendByteAsync(0);
+      },
+      async chooseDetail(detail, state) {
+        await this.sendByteAsync(5);
+        await this.sendByteAsync(detail);
+        await this.sendByteAsync(state + 1);
+        await this.sendByteAsync(0);
+      },
+      checkboxChange_Camera: function(e) {
+        var values = e.detail.value;
+        this.checkboxes_Camera.forEach((checkbox) => {
+          if (checkbox.checked != values.includes(checkbox.value)) {
+            checkbox.checked = values.includes(checkbox.value);
+            this.chooseDetail(checkbox.code, checkbox.checked);
+          }
+        });
+      },
+      checkboxChange_Normal: function(e) {
+        var values = e.detail.value;
+        this.checkboxes_Normal.forEach((checkbox) => {
+          if (checkbox.checked != values.includes(checkbox.value)) {
+            checkbox.checked = values.includes(checkbox.value);
+            this.chooseDetail(checkbox.code, checkbox.checked);
+          }
+        });
+      }
+    }
+  };
+  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
+      vue.createElementVNode(
+        "radio-group",
+        {
+          onChange: _cache[0] || (_cache[0] = (...args) => $options.onRadioChange && $options.onRadioChange(...args)),
+          class: "radio-inputs"
+        },
+        [
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($data.moduleBoxes, (item, index) => {
+              return vue.openBlock(), vue.createElementBlock("view", {
+                class: "radio-tile",
+                key: index
+              }, [
+                vue.createElementVNode("radio", {
+                  class: "radio-input",
+                  value: item.value,
+                  checked: item.checked
+                }, vue.toDisplayString(item.name), 9, ["value", "checked"])
+              ]);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ],
+        32
+        /* HYDRATE_EVENTS */
+      ),
+      $data.selectedModuleValue == "Normal" ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "module-container"
+      }, [
+        vue.createElementVNode("text", { class: "text-log" }, "已开启普通模式！"),
+        vue.createElementVNode(
+          "checkbox-group",
+          {
+            onChange: _cache[1] || (_cache[1] = (...args) => $options.checkboxChange_Normal && $options.checkboxChange_Normal(...args))
+          },
+          [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($data.checkboxes_Normal, (checkbox) => {
+                return vue.openBlock(), vue.createElementBlock("label", {
+                  key: checkbox.value
+                }, [
+                  vue.createElementVNode("checkbox", {
+                    value: checkbox.value,
+                    checked: checkbox.checked
+                  }, vue.toDisplayString(checkbox.name), 9, ["value", "checked"])
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ],
+          32
+          /* HYDRATE_EVENTS */
+        )
+      ])) : vue.createCommentVNode("v-if", true),
+      $data.selectedModuleValue == "Camera" ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 1,
+        class: "module-container"
+      }, [
+        vue.createElementVNode("text", { class: "text-log" }, "已开启图传模式！"),
+        vue.createElementVNode(
+          "checkbox-group",
+          {
+            onChange: _cache[2] || (_cache[2] = (...args) => $options.checkboxChange_Camera && $options.checkboxChange_Camera(...args))
+          },
+          [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($data.checkboxes_Camera, (checkbox) => {
+                return vue.openBlock(), vue.createElementBlock("label", {
+                  key: checkbox.value
+                }, [
+                  vue.createElementVNode("checkbox", {
+                    value: checkbox.value,
+                    checked: checkbox.checked
+                  }, vue.toDisplayString(checkbox.name), 9, ["value", "checked"])
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ],
+          32
+          /* HYDRATE_EVENTS */
+        )
+      ])) : vue.createCommentVNode("v-if", true)
+    ]);
+  }
+  const PagesDebuggerDebugger = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__file", "D:/CodeBase/Panel/pages/debugger/debugger.vue"]]);
+  const _sfc_main$1 = {
+    data() {
+      return {
+        waveInterval: 50,
+        formWidth: "",
+        formHeight: "",
+        waveData: []
+      };
+    },
+    onReady() {
+      const animationCtx = uni.createCanvasContext("Waveform-canvas", this);
+      let angle = 0;
+      setInterval(() => {
+        animationCtx.clearRect(0, 0, 200, 200);
+        animationCtx.beginPath();
+        animationCtx.arc(100, 100, 50, 0, 2 * Math.PI);
+        animationCtx.setFillStyle("#66ccff");
+        animationCtx.fill();
+        animationCtx.closePath();
+        animationCtx.beginPath();
+        animationCtx.arc(100, 100, 50, 0, angle);
+        animationCtx.setStrokeStyle("#ffcc00");
+        animationCtx.setLineWidth(5);
+        animationCtx.stroke();
+        animationCtx.closePath();
+        animationCtx.draw();
+        angle += 0.1;
+        if (angle >= 2 * Math.PI) {
+          angle = 0;
+        }
+      }, this.waveInterval);
+    }
+  };
+  function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
+      vue.createElementVNode("canvas", {
+        class: "WaveCanvas-container",
+        "canvas-id": "Waveform-canvas",
+        style: { "width": "100%", "height": "200px" }
+      })
+    ]);
+  }
+  const PagesScreenScreen = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__file", "D:/CodeBase/Panel/pages/screen/screen.vue"]]);
   __definePage("pages/index/index", PagesIndexIndex);
   __definePage("pages/bluetooth/bluetooth", PagesBluetoothBluetooth);
   __definePage("pages/setting/setting", PagesSettingSetting);
+  __definePage("pages/debugger/debugger", PagesDebuggerDebugger);
+  __definePage("pages/screen/screen", PagesScreenScreen);
   const _sfc_main = {
     onLaunch: function() {
       formatAppLog("log", "at App.vue:4", "App Launch");
