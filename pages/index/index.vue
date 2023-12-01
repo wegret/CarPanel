@@ -76,8 +76,21 @@
 			console.log('Connection State:', this.IndexIsConnected);
 			if (this.IndexIsConnected)
 				console.log('DeviceId:', PanelService.deviceId);
-		},
+
+			uni.onBLEConnectionStateChange((res) => {
+				if (!res.connected) {
+					console.log('连接已断开');
+					this.IndexIsConnected = false;
+					uni.showToast({
+						title: '蓝牙已断开！',
+						icon: 'fail',
+						duration: 2000
+					});
+				}
+			});
+		}, 
 		onLoad() {
+			/* 监听信息 */
 			uni.onBLECharacteristicValueChange((res) => {
 				console.log('Receive!');
 				this.extractBytesFromBuffer(res.value);
@@ -164,26 +177,27 @@
 
 <style>
 	.state-container {
-	    display: flex;
-	    flex-direction: row;
+		display: flex;
+		flex-direction: row;
 		border-radius: 8px;
 		border: 1px solid #0055ff;
 	}
-	
+
 	.state-text-title {
-	    flex: 1; /* 占据 25% 的宽度 */
-	    max-width: 25%;
+		flex: 1;
+		/* 占据 25% 的宽度 */
+		max-width: 25%;
 		border-radius: 4px;
 		padding: 5px;
 		background-color: #0055ff;
 		color: aliceblue;
 	}
-	
+
 	.state-text-detail {
-	    flex: 3; /* 占据 75% 的宽度 */
-	    max-width: 75%;
+		flex: 3;
+		/* 占据 75% 的宽度 */
+		max-width: 75%;
 		padding: 5px;
 		padding-left: 10px;
 	}
-
 </style>

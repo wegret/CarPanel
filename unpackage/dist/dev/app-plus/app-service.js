@@ -318,10 +318,21 @@ if (uni.restoreGlobal) {
       formatAppLog("log", "at pages/index/index.vue:76", "Connection State:", this.IndexIsConnected);
       if (this.IndexIsConnected)
         formatAppLog("log", "at pages/index/index.vue:78", "DeviceId:", PanelService.deviceId);
+      uni.onBLEConnectionStateChange((res) => {
+        if (!res.connected) {
+          formatAppLog("log", "at pages/index/index.vue:82", "连接已断开");
+          this.IndexIsConnected = false;
+          uni.showToast({
+            title: "蓝牙已断开！",
+            icon: "fail",
+            duration: 2e3
+          });
+        }
+      });
     },
     onLoad() {
       uni.onBLECharacteristicValueChange((res) => {
-        formatAppLog("log", "at pages/index/index.vue:82", "Receive!");
+        formatAppLog("log", "at pages/index/index.vue:95", "Receive!");
         this.extractBytesFromBuffer(res.value);
       });
     },
@@ -376,7 +387,7 @@ if (uni.restoreGlobal) {
       },
       // 处理当前命令行
       handleMessage() {
-        formatAppLog("log", "at pages/index/index.vue:142", "Line", this.byteQueue);
+        formatAppLog("log", "at pages/index/index.vue:155", "Line", this.byteQueue);
         this.streamText = {
           key: Date.now(),
           value: this.byteQueue.join(",") + ";"
@@ -434,21 +445,21 @@ if (uni.restoreGlobal) {
         }, "调试模式")
       ]),
       vue.createVNode(_component_OutputStream, { inputString: $data.streamText }, null, 8, ["inputString"]),
-      (vue.openBlock(true), vue.createElementBlock(
+      $data.IndexIsConnected ? (vue.openBlock(true), vue.createElementBlock(
         vue.Fragment,
-        null,
+        { key: 2 },
         vue.renderList($data.states, (state) => {
           return vue.openBlock(), vue.createElementBlock("view", { class: "state-container" }, [
             vue.createElementVNode(
               "text",
-              null,
+              { class: "state-text-title" },
               vue.toDisplayString(state.label),
               1
               /* TEXT */
             ),
             vue.createElementVNode(
               "text",
-              null,
+              { class: "state-text-detail" },
               vue.toDisplayString(state.value),
               1
               /* TEXT */
@@ -457,7 +468,7 @@ if (uni.restoreGlobal) {
         }),
         256
         /* UNKEYED_FRAGMENT */
-      ))
+      )) : vue.createCommentVNode("v-if", true)
     ]);
   }
   const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__file", "D:/CodeBase/Panel/pages/index/index.vue"]]);

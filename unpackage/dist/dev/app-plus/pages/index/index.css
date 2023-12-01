@@ -88,6 +88,24 @@
 
 
 .state-container {
+		display: flex;
+		flex-direction: row;
 		border-radius: 8px;
-		border: 1px solid #999233;
+		border: 1px solid #0055ff;
+}
+.state-text-title {
+		flex: 1;
+		/* 占据 25% 的宽度 */
+		max-width: 25%;
+		border-radius: 4px;
+		padding: 5px;
+		background-color: #0055ff;
+		color: aliceblue;
+}
+.state-text-detail {
+		flex: 3;
+		/* 占据 75% 的宽度 */
+		max-width: 75%;
+		padding: 5px;
+		padding-left: 10px;
 }
