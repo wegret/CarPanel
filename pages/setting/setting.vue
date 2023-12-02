@@ -2,17 +2,19 @@
 	<view class="content">
 		<view class="title">参数设置</view>
 
-		<view v-for="group in groups" :key="group.groupName" class="group-container">
-			<view class="group-title">{{ group.groupName }}</view>
+		<keep-alive>
+			<view v-for="group in groups" :key="group.groupName" class="group-container">
+				<view class="group-title">{{ group.groupName }}</view>
 
-			<view v-for="param in group.params" :key="param.id" class="input-group">
-				<text class="label">{{param.label}}</text>
-				<input :type="param.type" v-model.number="param.value" :placeholder="'请输入' + param.label" class="input"
-					:step="param.step || 0.01" />
-				<button @click="submitSingleParameter(param.num, param.value, param.codetype)"
-					class="button btn-submit">提交</button>
+				<view v-for="param in group.params" :key="param.id" class="input-group">
+					<text class="label">{{param.label}}</text>
+					<input :type="param.type" v-model.number="param.value" :placeholder="'请输入' + param.label"
+						class="input" :step="param.step || 0.01" />
+					<button @click="submitSingleParameter(param.num, param.value, param.codetype)"
+						class="button btn-submit">提交</button>
+				</view>
 			</view>
-		</view>
+		</keep-alive>
 
 	</view>
 </template>
@@ -33,7 +35,7 @@
 								id: 'Kp',
 								label: 'Kp',
 								type: 'number',
-								value: 0,
+								value: 3.7,
 								num: 1,
 								codetype: 1
 							},
@@ -41,7 +43,7 @@
 								id: 'Ki',
 								label: 'Ki',
 								type: 'number',
-								value: 0,
+								value: 0.05,
 								num: 2,
 								codetype: 1
 							},
@@ -59,22 +61,77 @@
 						groupName: "速度参数",
 						params: [{
 								id: 'v_straight',
-								label: '目标速度',
+								label: '左轮速度',
 								type: 'number',
-								value: 0,
+								value: 750,
 								num: 4,
 								codetype: 0
 							},
 							{
 								id: 'v_turning',
-								label: '弯道速度',
+								label: '右轮速度',
 								type: 'number',
-								value: 0,
+								value: 750,
 								num: 5,
+								codetype: 0
+							},
+							{
+								id: 'v_turning_low',
+								label: '弯道低速',
+								type: 'number',
+								value: 400,
+								num: 10,
+								codetype: 0
+							},
+							{
+								id: 'v_turning_high',
+								label: '弯道高速',
+								type: 'number',
+								value: 1000,
+								num: 11,
 								codetype: 0
 							}
 						]
-					}
+					},
+					{
+						groupName: "舵机PID",
+						params: [{
+								id: 'Kp_d',
+								label: 'Kp_d',
+								type: 'number',
+								value: 1.6,
+								num: 6,
+								codetype: 1
+							},
+							{
+								id: 'Ki_d',
+								label: 'Ki_d',
+								type: 'number',
+								value: 0,
+								num: 7,
+								codetype: 1
+							},
+							{
+								id: 'Kd_d',
+								label: 'Kd_d',
+								type: 'number',
+								value: 5,
+								num: 8,
+								codetype: 1
+							}
+						]
+					},
+					{
+						groupName: "视觉参数",
+						params: [{
+							id: 'MID_START',
+							label: '中点预计点',
+							type: 'number',
+							value: 70,
+							num: 9,
+							codetype: 0
+						}]
+					},
 				]
 			}
 		},

@@ -2,7 +2,7 @@
 	<view class="content">
 
 		<view>
-			<button v-if="IndexIsConnected" class="button btn-connected">蓝牙已链接</button>
+			<button v-if="IndexIsConnected" class="button btn-connected" @click="disconnectBluetooth">蓝牙已链接</button>
 			<button v-else class="button btn-unconnected" @click="gotoBluetooth">蓝牙未链接</button>
 		</view>
 
@@ -37,6 +37,7 @@
 	import {
 		setService,
 		connectService,
+		disconnectService,
 		sendByte, // 发送一个hex字节
 		sendUTFString, // 发送utf字符串
 		PanelService, // 设备信息
@@ -88,7 +89,7 @@
 					});
 				}
 			});
-		}, 
+		},
 		onLoad() {
 			/* 监听信息 */
 			uni.onBLECharacteristicValueChange((res) => {
@@ -102,6 +103,9 @@
 				uni.navigateTo({
 					url: "/pages/bluetooth/bluetooth"
 				});
+			},
+			disconnectBluetooth() {
+				this.IndexIsConnected = disconnectService();
 			},
 			/* 跳转：设置页面 */
 			gotoSetting() {

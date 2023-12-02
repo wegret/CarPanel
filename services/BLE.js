@@ -45,6 +45,36 @@ export function connectService() {
 	});
 }
 
+export function disconnectService() {
+	if (!isConnected) {
+		console.log('Bluetooth is not connected');
+		return false;
+	}
+
+	uni.closeBLEConnection({
+		deviceId: PanelService.deviceId,
+		success: (res) => {
+			isConnected = false;
+			console.log('Disconnected successfully!');
+			uni.showToast({
+				title: '蓝牙已断开连接！',
+				icon: 'success',
+				duration: 2000
+			});
+			return false;
+		},
+		fail: (err) => {
+			console.error('Failed to disconnect:', err);
+			uni.showToast({
+				title: '断开连接失败！',
+				icon: 'fail',
+				duration: 2000
+			});
+			return isConnected;
+		}
+	});
+}
+
 
 /* 开启蓝牙接收 */
 export function enableBluetoothListener() {

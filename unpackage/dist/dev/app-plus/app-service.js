@@ -70,6 +70,34 @@ if (uni.restoreGlobal) {
       }
     });
   }
+  function disconnectService() {
+    if (!isConnected) {
+      formatAppLog("log", "at services/BLE.js:50", "Bluetooth is not connected");
+      return false;
+    }
+    uni.closeBLEConnection({
+      deviceId: PanelService.deviceId,
+      success: (res) => {
+        isConnected = false;
+        formatAppLog("log", "at services/BLE.js:58", "Disconnected successfully!");
+        uni.showToast({
+          title: "蓝牙已断开连接！",
+          icon: "success",
+          duration: 2e3
+        });
+        return false;
+      },
+      fail: (err) => {
+        formatAppLog("error", "at services/BLE.js:67", "Failed to disconnect:", err);
+        uni.showToast({
+          title: "断开连接失败！",
+          icon: "fail",
+          duration: 2e3
+        });
+        return isConnected;
+      }
+    });
+  }
   function enableBluetoothListener() {
     uni.notifyBLECharacteristicValueChange({
       deviceId: PanelService.deviceId,
@@ -77,7 +105,7 @@ if (uni.restoreGlobal) {
       characteristicId: PanelService.characteristicId,
       state: true,
       success: (res) => {
-        formatAppLog("log", "at services/BLE.js:57", "Notification enabled for", PanelService.characteristicId, ":", res);
+        formatAppLog("log", "at services/BLE.js:87", "Notification enabled for", PanelService.characteristicId, ":", res);
         uni.showToast({
           title: "蓝牙接收启动！",
           icon: "success",
@@ -109,7 +137,7 @@ if (uni.restoreGlobal) {
             if (retriesLeft > 0) {
               attemptSend(retriesLeft - 1);
             } else {
-              formatAppLog("error", "at services/BLE.js:92", "Fail to send after retries!", err);
+              formatAppLog("error", "at services/BLE.js:122", "Fail to send after retries!", err);
               reject(err);
             }
           }
@@ -130,7 +158,7 @@ if (uni.restoreGlobal) {
       characteristicId: PanelService.characteristicId,
       value: buffer,
       success: function(res) {
-        formatAppLog("log", "at services/BLE.js:117", "Data sent successfully:", res);
+        formatAppLog("log", "at services/BLE.js:147", "Data sent successfully:", res);
         uni.showToast({
           title: "发送成功！",
           icon: "success",
@@ -138,7 +166,7 @@ if (uni.restoreGlobal) {
         });
       },
       fail: function(err) {
-        formatAppLog("error", "at services/BLE.js:125", "Failed to send data:", err);
+        formatAppLog("error", "at services/BLE.js:155", "Failed to send data:", err);
         uni.showToast({
           title: "发送失败！",
           icon: "success",
@@ -315,12 +343,12 @@ if (uni.restoreGlobal) {
     },
     onShow() {
       this.IndexIsConnected = isConnected;
-      formatAppLog("log", "at pages/index/index.vue:76", "Connection State:", this.IndexIsConnected);
+      formatAppLog("log", "at pages/index/index.vue:77", "Connection State:", this.IndexIsConnected);
       if (this.IndexIsConnected)
-        formatAppLog("log", "at pages/index/index.vue:78", "DeviceId:", PanelService.deviceId);
+        formatAppLog("log", "at pages/index/index.vue:79", "DeviceId:", PanelService.deviceId);
       uni.onBLEConnectionStateChange((res) => {
         if (!res.connected) {
-          formatAppLog("log", "at pages/index/index.vue:82", "连接已断开");
+          formatAppLog("log", "at pages/index/index.vue:83", "连接已断开");
           this.IndexIsConnected = false;
           uni.showToast({
             title: "蓝牙已断开！",
@@ -332,7 +360,7 @@ if (uni.restoreGlobal) {
     },
     onLoad() {
       uni.onBLECharacteristicValueChange((res) => {
-        formatAppLog("log", "at pages/index/index.vue:95", "Receive!");
+        formatAppLog("log", "at pages/index/index.vue:96", "Receive!");
         this.extractBytesFromBuffer(res.value);
       });
     },
@@ -342,6 +370,9 @@ if (uni.restoreGlobal) {
         uni.navigateTo({
           url: "/pages/bluetooth/bluetooth"
         });
+      },
+      disconnectBluetooth() {
+        this.IndexIsConnected = disconnectService();
       },
       /* 跳转：设置页面 */
       gotoSetting() {
@@ -387,7 +418,7 @@ if (uni.restoreGlobal) {
       },
       // 处理当前命令行
       handleMessage() {
-        formatAppLog("log", "at pages/index/index.vue:155", "Line", this.byteQueue);
+        formatAppLog("log", "at pages/index/index.vue:159", "Line", this.byteQueue);
         this.streamText = {
           key: Date.now(),
           value: this.byteQueue.join(",") + ";"
@@ -410,38 +441,39 @@ if (uni.restoreGlobal) {
       vue.createElementVNode("view", null, [
         $data.IndexIsConnected ? (vue.openBlock(), vue.createElementBlock("button", {
           key: 0,
-          class: "button btn-connected"
+          class: "button btn-connected",
+          onClick: _cache[0] || (_cache[0] = (...args) => $options.disconnectBluetooth && $options.disconnectBluetooth(...args))
         }, "蓝牙已链接")) : (vue.openBlock(), vue.createElementBlock("button", {
           key: 1,
           class: "button btn-unconnected",
-          onClick: _cache[0] || (_cache[0] = (...args) => $options.gotoBluetooth && $options.gotoBluetooth(...args))
+          onClick: _cache[1] || (_cache[1] = (...args) => $options.gotoBluetooth && $options.gotoBluetooth(...args))
         }, "蓝牙未链接"))
       ]),
       $data.IndexIsConnected ? (vue.openBlock(), vue.createElementBlock("view", { key: 0 }, [
         vue.createElementVNode("button", {
-          onClick: _cache[1] || (_cache[1] = (...args) => $options.test && $options.test(...args))
+          onClick: _cache[2] || (_cache[2] = (...args) => $options.test && $options.test(...args))
         }, "测试通信"),
         vue.createElementVNode("button", {
-          onClick: _cache[2] || (_cache[2] = (...args) => $options.ListenerStart && $options.ListenerStart(...args))
+          onClick: _cache[3] || (_cache[3] = (...args) => $options.ListenerStart && $options.ListenerStart(...args))
         }, "开启接收")
       ])) : vue.createCommentVNode("v-if", true),
       $data.IndexIsConnected ? (vue.openBlock(), vue.createElementBlock("view", { key: 1 }, [
         vue.createElementVNode("button", {
-          onClick: _cache[3] || (_cache[3] = (...args) => $options.CarStart && $options.CarStart(...args)),
+          onClick: _cache[4] || (_cache[4] = (...args) => $options.CarStart && $options.CarStart(...args)),
           class: "button btn-important"
         }, "启动"),
         vue.createElementVNode("button", {
-          onClick: _cache[4] || (_cache[4] = (...args) => $options.CarStop && $options.CarStop(...args))
+          onClick: _cache[5] || (_cache[5] = (...args) => $options.CarStop && $options.CarStop(...args))
         }, "停止")
       ])) : vue.createCommentVNode("v-if", true),
       vue.createElementVNode("view", null, [
         vue.createElementVNode("button", {
-          onClick: _cache[5] || (_cache[5] = (...args) => $options.gotoSetting && $options.gotoSetting(...args))
+          onClick: _cache[6] || (_cache[6] = (...args) => $options.gotoSetting && $options.gotoSetting(...args))
         }, "设置参数")
       ]),
       vue.createElementVNode("view", null, [
         vue.createElementVNode("button", {
-          onClick: _cache[6] || (_cache[6] = (...args) => $options.gotoDebugger && $options.gotoDebugger(...args))
+          onClick: _cache[7] || (_cache[7] = (...args) => $options.gotoDebugger && $options.gotoDebugger(...args))
         }, "调试模式")
       ]),
       vue.createVNode(_component_OutputStream, { inputString: $data.streamText }, null, 8, ["inputString"]),
@@ -581,7 +613,7 @@ if (uni.restoreGlobal) {
                 id: "Kp",
                 label: "Kp",
                 type: "number",
-                value: 0,
+                value: 3.7,
                 num: 1,
                 codetype: 1
               },
@@ -589,7 +621,7 @@ if (uni.restoreGlobal) {
                 id: "Ki",
                 label: "Ki",
                 type: "number",
-                value: 0,
+                value: 0.05,
                 num: 2,
                 codetype: 1
               },
@@ -608,21 +640,77 @@ if (uni.restoreGlobal) {
             params: [
               {
                 id: "v_straight",
-                label: "目标速度",
+                label: "左轮速度",
                 type: "number",
-                value: 0,
+                value: 750,
                 num: 4,
                 codetype: 0
               },
               {
                 id: "v_turning",
-                label: "弯道速度",
+                label: "右轮速度",
                 type: "number",
-                value: 0,
+                value: 750,
                 num: 5,
+                codetype: 0
+              },
+              {
+                id: "v_turning_low",
+                label: "弯道低速",
+                type: "number",
+                value: 400,
+                num: 10,
+                codetype: 0
+              },
+              {
+                id: "v_turning_high",
+                label: "弯道高速",
+                type: "number",
+                value: 1e3,
+                num: 11,
                 codetype: 0
               }
             ]
+          },
+          {
+            groupName: "舵机PID",
+            params: [
+              {
+                id: "Kp_d",
+                label: "Kp_d",
+                type: "number",
+                value: 1.6,
+                num: 6,
+                codetype: 1
+              },
+              {
+                id: "Ki_d",
+                label: "Ki_d",
+                type: "number",
+                value: 0,
+                num: 7,
+                codetype: 1
+              },
+              {
+                id: "Kd_d",
+                label: "Kd_d",
+                type: "number",
+                value: 5,
+                num: 8,
+                codetype: 1
+              }
+            ]
+          },
+          {
+            groupName: "视觉参数",
+            params: [{
+              id: "MID_START",
+              label: "中点预计点",
+              type: "number",
+              value: 70,
+              num: 9,
+              codetype: 0
+            }]
           }
         ]
       };
@@ -646,13 +734,13 @@ if (uni.restoreGlobal) {
       async submitSingleParameter(paramNum, value, codetype) {
         await this.sendByteAsync(3);
         if (codetype == 0) {
-          formatAppLog("log", "at pages/setting/setting.vue:101", "整数");
+          formatAppLog("log", "at pages/setting/setting.vue:158", "整数");
           await this.sendByteAsync(paramNum);
           await this.sendByteAsync(value / 254 + 1);
           await this.sendByteAsync(value % 254 + 1);
           await this.sendByteAsync(0);
         } else {
-          formatAppLog("log", "at pages/setting/setting.vue:107", "浮点数");
+          formatAppLog("log", "at pages/setting/setting.vue:164", "浮点数");
           let result = Math.round(value * 100);
           await this.sendByteAsync(paramNum);
           await this.sendByteAsync(result / 254 + 1);
@@ -665,63 +753,71 @@ if (uni.restoreGlobal) {
   function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
       vue.createElementVNode("view", { class: "title" }, "参数设置"),
-      (vue.openBlock(true), vue.createElementBlock(
-        vue.Fragment,
+      (vue.openBlock(), vue.createBlock(
+        vue.KeepAlive,
         null,
-        vue.renderList($data.groups, (group) => {
-          return vue.openBlock(), vue.createElementBlock("view", {
-            key: group.groupName,
-            class: "group-container"
-          }, [
-            vue.createElementVNode(
-              "view",
-              { class: "group-title" },
-              vue.toDisplayString(group.groupName),
-              1
-              /* TEXT */
-            ),
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList(group.params, (param) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: param.id,
-                  class: "input-group"
-                }, [
-                  vue.createElementVNode(
-                    "text",
-                    { class: "label" },
-                    vue.toDisplayString(param.label),
-                    1
-                    /* TEXT */
-                  ),
-                  vue.withDirectives(vue.createElementVNode("input", {
-                    type: param.type,
-                    "onUpdate:modelValue": ($event) => param.value = $event,
-                    placeholder: "请输入" + param.label,
-                    class: "input",
-                    step: param.step || 0.01
-                  }, null, 8, ["type", "onUpdate:modelValue", "placeholder", "step"]), [
-                    [
-                      vue.vModelDynamic,
-                      param.value,
-                      void 0,
-                      { number: true }
-                    ]
-                  ]),
-                  vue.createElementVNode("button", {
-                    onClick: ($event) => $options.submitSingleParameter(param.num, param.value, param.codetype),
-                    class: "button btn-submit"
-                  }, "提交", 8, ["onClick"])
-                ]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ]);
-        }),
-        128
-        /* KEYED_FRAGMENT */
+        [
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($data.groups, (group) => {
+              return vue.openBlock(), vue.createElementBlock("view", {
+                key: group.groupName,
+                class: "group-container"
+              }, [
+                vue.createElementVNode(
+                  "view",
+                  { class: "group-title" },
+                  vue.toDisplayString(group.groupName),
+                  1
+                  /* TEXT */
+                ),
+                (vue.openBlock(true), vue.createElementBlock(
+                  vue.Fragment,
+                  null,
+                  vue.renderList(group.params, (param) => {
+                    return vue.openBlock(), vue.createElementBlock("view", {
+                      key: param.id,
+                      class: "input-group"
+                    }, [
+                      vue.createElementVNode(
+                        "text",
+                        { class: "label" },
+                        vue.toDisplayString(param.label),
+                        1
+                        /* TEXT */
+                      ),
+                      vue.withDirectives(vue.createElementVNode("input", {
+                        type: param.type,
+                        "onUpdate:modelValue": ($event) => param.value = $event,
+                        placeholder: "请输入" + param.label,
+                        class: "input",
+                        step: param.step || 0.01
+                      }, null, 8, ["type", "onUpdate:modelValue", "placeholder", "step"]), [
+                        [
+                          vue.vModelDynamic,
+                          param.value,
+                          void 0,
+                          { number: true }
+                        ]
+                      ]),
+                      vue.createElementVNode("button", {
+                        onClick: ($event) => $options.submitSingleParameter(param.num, param.value, param.codetype),
+                        class: "button btn-submit"
+                      }, "提交", 8, ["onClick"])
+                    ]);
+                  }),
+                  128
+                  /* KEYED_FRAGMENT */
+                ))
+              ]);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ],
+        1024
+        /* DYNAMIC_SLOTS */
       ))
     ]);
   }
