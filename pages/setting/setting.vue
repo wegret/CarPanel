@@ -1,5 +1,6 @@
 <template>
 	<view class="content">
+		<button @click="clearCache" class="button">清除缓存</button>
 		<view class="title">参数设置</view>
 
 		<keep-alive>
@@ -159,7 +160,26 @@
 				]
 			}
 		},
-		onLoad() {},
+		onShow() {
+			uni.getStorage({
+				key: 'isValueIn',
+				success: (res) => {
+					let that = this;
+					uni.showModal({
+						title: '提示',
+						content: '是否载入上次的数据？',
+						success: function(res) {
+							if (res.confirm) {
+								that.loadPreviousData();
+							} else if (res.cancel) {}
+						}
+					});
+				},
+				fail: () => {
+
+				}
+			});
+		},
 		methods: {
 			checkNumberType(num) {
 				if (Number.isInteger(num)) {
@@ -192,6 +212,50 @@
 					await this.sendByteAsync((result % 254) + 1);
 					await this.sendByteAsync(0x00);
 				}
+				uni.setStorage({
+					key: 'param_' + paramNum,
+					data: value,
+					success: function() {
+						console.log('参数保存成功');
+					}
+				});
+				uni.setStorage({
+					key: 'isValueIn', // 是否有数据缓存
+					data: true,
+					success: function() {}
+				});
+			},
+			loadPreviousData() {
+				this.groups.forEach(group => {
+					group.params.forEach(param => {
+						uni.getStorage({
+							key: 'param_' + param.num,
+							success: (res) => {
+								param.value = res.data;
+							},
+							fail: () => {}
+						});
+					});
+				});
+			},
+			clearCache() {
+				uni.showModal({
+					title: '确认',
+					content: '确定要清除所有缓存数据吗？',
+					success: function(res) {
+						if (res.confirm) {
+							console.log('用户点击确定');
+							uni.clearStorage();
+							// this.groups.forEach(group => {
+							//     group.params.forEach(param => {
+							//         uni.removeStorage({ key: 'param_' + param.num });
+							//     });
+							// });
+						} else if (res.cancel) {
+
+						}
+					}
+				});
 			}
 		}
 	}

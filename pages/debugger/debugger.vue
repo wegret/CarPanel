@@ -88,6 +88,9 @@
 				],
 			}
 		},
+		onShow() {
+			
+		},
 		methods: {
 			onRadioChange: function(e) {
 				var values = e.detail.value;

@@ -739,7 +739,25 @@ if (uni.restoreGlobal) {
         ]
       };
     },
-    onLoad() {
+    onShow() {
+      uni.getStorage({
+        key: "isValueIn",
+        success: (res) => {
+          let that = this;
+          uni.showModal({
+            title: "提示",
+            content: "是否载入上次的数据？",
+            success: function(res2) {
+              if (res2.confirm) {
+                that.loadPreviousData();
+              } else if (res2.cancel)
+                ;
+            }
+          });
+        },
+        fail: () => {
+        }
+      });
     },
     methods: {
       checkNumberType(num) {
@@ -758,24 +776,69 @@ if (uni.restoreGlobal) {
       async submitSingleParameter(paramNum, value, codetype) {
         await this.sendByteAsync(3);
         if (codetype == 0) {
-          formatAppLog("log", "at pages/setting/setting.vue:182", "整数");
+          formatAppLog("log", "at pages/setting/setting.vue:202", "整数");
           await this.sendByteAsync(paramNum);
           await this.sendByteAsync(value / 254 + 1);
           await this.sendByteAsync(value % 254 + 1);
           await this.sendByteAsync(0);
         } else {
-          formatAppLog("log", "at pages/setting/setting.vue:188", "浮点数");
+          formatAppLog("log", "at pages/setting/setting.vue:208", "浮点数");
           let result = Math.round(value * 100);
           await this.sendByteAsync(paramNum);
           await this.sendByteAsync(result / 254 + 1);
           await this.sendByteAsync(result % 254 + 1);
           await this.sendByteAsync(0);
         }
+        uni.setStorage({
+          key: "param_" + paramNum,
+          data: value,
+          success: function() {
+            formatAppLog("log", "at pages/setting/setting.vue:219", "参数保存成功");
+          }
+        });
+        uni.setStorage({
+          key: "isValueIn",
+          // 是否有数据缓存
+          data: true,
+          success: function() {
+          }
+        });
+      },
+      loadPreviousData() {
+        this.groups.forEach((group) => {
+          group.params.forEach((param) => {
+            uni.getStorage({
+              key: "param_" + param.num,
+              success: (res) => {
+                param.value = res.data;
+              },
+              fail: () => {
+              }
+            });
+          });
+        });
+      },
+      clearCache() {
+        uni.showModal({
+          title: "确认",
+          content: "确定要清除所有缓存数据吗？",
+          success: function(res) {
+            if (res.confirm) {
+              formatAppLog("log", "at pages/setting/setting.vue:247", "用户点击确定");
+              uni.clearStorage();
+            } else if (res.cancel)
+              ;
+          }
+        });
       }
     }
   };
   function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
+      vue.createElementVNode("button", {
+        onClick: _cache[0] || (_cache[0] = (...args) => $options.clearCache && $options.clearCache(...args)),
+        class: "button"
+      }, "清除缓存"),
       vue.createElementVNode("view", { class: "title" }, "参数设置"),
       (vue.openBlock(), vue.createBlock(
         vue.KeepAlive,
@@ -901,6 +964,8 @@ if (uni.restoreGlobal) {
         ]
       };
     },
+    onShow() {
+    },
     methods: {
       onRadioChange: function(e) {
         var values = e.detail.value;
@@ -911,7 +976,7 @@ if (uni.restoreGlobal) {
             this.chooseModule(box);
           }
         }
-        formatAppLog("log", "at pages/debugger/debugger.vue:101", this.selectedModuleValue);
+        formatAppLog("log", "at pages/debugger/debugger.vue:104", this.selectedModuleValue);
       },
       async sendByteAsync(byte) {
         await new Promise((resolve) => {
@@ -1748,7 +1813,7 @@ if (uni.restoreGlobal) {
   function S(e) {
     return e && "string" == typeof e ? JSON.parse(e) : e;
   }
-  const b = true, k = "app", T = S([]), P = k, A = S('{\n    "address": [\n        "127.0.0.1",\n        "192.168.1.127"\n    ],\n    "debugPort": 9000,\n    "initialLaunchType": "local",\n    "servePort": 7000,\n    "skipFiles": [\n        "<node_internals>/**",\n        "D:/Program Files/HBuilderX/plugins/unicloud/**/*.js"\n    ]\n}\n'), E = S('[{"provider":"aliyun","spaceName":"temp","spaceId":"mp-0e1b8f31-2f8c-45f3-80e3-2dbbe9fe6c49","clientSecret":"KdtiWIkhbM0qkSYNtPn94g==","endpoint":"https://api.next.bspapp.com"}]') || [];
+  const b = true, k = "app", T = S([]), P = k, A = S('{\n    "address": [\n        "127.0.0.1",\n        "10.32.87.3"\n    ],\n    "debugPort": 9000,\n    "initialLaunchType": "local",\n    "servePort": 7000,\n    "skipFiles": [\n        "<node_internals>/**",\n        "D:/Program Files/HBuilderX/plugins/unicloud/**/*.js"\n    ]\n}\n'), E = S('[{"provider":"aliyun","spaceName":"temp","spaceId":"mp-0e1b8f31-2f8c-45f3-80e3-2dbbe9fe6c49","clientSecret":"KdtiWIkhbM0qkSYNtPn94g==","endpoint":"https://api.next.bspapp.com"}]') || [];
   let x = "";
   try {
     x = "__UNI__E8A3E9B";
