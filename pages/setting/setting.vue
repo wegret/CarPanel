@@ -54,7 +54,31 @@
 								value: 0,
 								num: 3,
 								codetype: 1
-							}
+							},
+							{
+								id: 'Kp_t',
+								label: 'Kp_turn',
+								type: 'number',
+								value: 3.7,
+								num: 12,
+								codetype: 1
+							},
+							{
+								id: 'Ki_t',
+								label: 'Ki_turn',
+								type: 'number',
+								value: 0.05,
+								num: 13,
+								codetype: 1
+							},
+							{
+								id: 'Kd_t',
+								label: 'Kd_turn',
+								type: 'number',
+								value: 0,
+								num: 14,
+								codetype: 1
+							},
 						]
 					},
 					{
