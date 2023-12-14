@@ -25,12 +25,49 @@
             }
             
         }
+        ,{
+            "path" : "pages/debugger/debugger",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+        ,{
+            "path" : "pages/screen/screen",
+            "style" :                                                                                    
+            {
+                "navigationBarTitleText": "",
+                "enablePullDownRefresh": false
+            }
+            
+        }
     ],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "Panel",
 		"navigationBarBackgroundColor": "#F8F8F8",
 		"backgroundColor": "#F8F8F8"
+	},
+	
+	"tabBar": {
+		"color": "#cbcbcb",
+		"selectedColor": "#162576",
+		"borderStyle": "black",
+		"backgroundColor": "#ffffff",
+		"list": [
+			{
+				"pagePath": "pages/index/index",
+				"iconPath": "static/icon/icon_home.png",
+				"text": "Panel"
+			},
+			{
+				"pagePath": "pages/screen/screen",
+				"iconPath": "static/icon/icon_friend.png",
+				"text": "Screen"
+			}
+		]
 	},
 	"uniIdRouter": {}
 }

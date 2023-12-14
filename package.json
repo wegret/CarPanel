@@ -1,0 +1,17 @@
+{
+    "id": "cc-echartSanDingTu",
+    "name": "基于echart实现散点图",
+    "displayName": "基于echart实现散点图",
+    "version": "1.0",
+    "description": "基于echart实现散点图",
+    "keywords": [
+        "echart",
+        "散点图"
+    ],
+    "dcloudext": {
+        "category": [
+            "前端组件",
+            "通用组件"
+        ]
+    }
+}
