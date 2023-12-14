@@ -155,6 +155,14 @@
 							value: 70,
 							num: 9,
 							codetype: 0
+						},
+						{
+							id: 'K_min',
+							label: '弯道最低降低幅度',
+							type: 'number',
+							value: 0.4,
+							num: 15,
+							codetype: 1
 						}]
 					},
 				]
